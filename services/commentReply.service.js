@@ -1,18 +1,31 @@
 const CommentReply = require("../models/CommentReply.model");
+const Notification = require("../models/Notification.model");
 const Post = require("../models/Post.model");
 
 module.exports = {
     save: async function (comment) {
         let result = {};
-        let date = new Date()
+        let date = new Date();
+        let mentUsers = comment.mentionedUsers;
+        delete comment.mentionedUsers;
         try {
             result.data = await new CommentReply(comment).save();
-            // await Post.findByIdAndUpdate(
-            //     comment.postId,
-            //     {
-            //         $inc: { commentCount: 1 },
-            //         $set: { lastActivityDate: date }
-            //     })
+
+            if (mentUsers.length > 0) {
+                mentUsers.map((mentionedUser) => {
+                    if (comment.createdBy + "" !== mentionedUser + "") {
+                        let notificationObj = {
+                            postId: comment.postId,
+                            title: " tagged you in a comments reply",
+                            type: "Tagged",
+                            createdBy: comment.createdBy,
+                            createdFor: mentionedUser,
+                        };
+                        new Notification(notificationObj).save();
+                    }
+                });
+            }
+
         } catch (err) {
             result.err = err.message;
         }

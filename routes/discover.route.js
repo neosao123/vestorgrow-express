@@ -9,4 +9,7 @@ router.route("/:id").get(auth, adminUserFreeCheckPermission.listAllAuth, discove
 
 router.route("/list").post(auth, adminUserFreeCheckPermission.listAllAuth, discoverController.listAll);
 router.route("/listPublic").post(discoverController.listAllPublic);
+
+router.route("/popular/keywords").get(discoverController.listPopularTags);
+
 module.exports = router;

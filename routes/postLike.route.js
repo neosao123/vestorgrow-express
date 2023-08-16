@@ -16,4 +16,8 @@ router
 
 router.route("/list").post(auth, adminUserFreeCheckPermission.listAllAuth, likeController.listAll);
 
+router.route("/update/type").get(likeController.updateAllType);
+
+router.route("/posts/reactions").post(auth, likeController.getPostUniqueReactions);
+
 module.exports = router;

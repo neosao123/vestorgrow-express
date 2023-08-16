@@ -47,6 +47,10 @@ const post_schema = mongoose.Schema(
         },
         lastActivityDate: {
             type: Date
+        },
+        postKeywords: {
+            type: [String],
+            default: []
         }
     },
     { timestamps: { createdAt: "createdAt" } }

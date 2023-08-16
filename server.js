@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 require("dotenv").config();
 const { Server } = require("socket.io");
 
+var path = require('path');
 const cors = require("cors");
 const port = process.env.PORT || 3000;
 var useragent = require("express-useragent");
@@ -32,8 +33,13 @@ app.use(bodyParser.json({ limit: "200mb" }));
 //   })
 // );
 app.use(useragent.express());
-app.use(cors());
+app.use(cors({
+  origin: "*"
+}));
 app.use("/uploads", express.static("uploads"));
+app.use("/assets", express.static("assets"));
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
 
 // import routes
 const userRoute = require("./routes/user.route");
@@ -108,7 +114,7 @@ io.on("connection", (socket) => {
     socket.join(room);
     console.log("User Joined Room: " + room);
   });
-  
+
   socket.on("newMessage", (newMessage) => {
     var chat = newMessage.users;
 

@@ -141,8 +141,9 @@ module.exports = {
       }
       // condition = { followingId: currUser._id, userId: { $ne: null } };
       // console.log("condition", condition);
-      // count = await UserFollower.countDocuments(condition);
+      count = await UserFollower.countDocuments(condition);
       result = {
+        count: count,
         data: data,
         total: data.length,
         currPage: parseInt(start / length) + 1,
@@ -290,6 +291,7 @@ module.exports = {
     }
     return result;
   },
+
   sendReq: async function (data, currUser) {
     let result = {};
     try {
@@ -300,30 +302,63 @@ module.exports = {
       let requested = await UserFollowerTemp.findOne({ userId: currUser._id, followingId: data.followingId });
       if (requested) {
         result.err = "Already requested";
+        return result;
       }
 
       let following = await UserFollower.findOne({ userId: currUser._id, followingId: data.followingId });
       if (following) {
         result.err = "Already following this user";
+        return result;
       }
 
       let userDetail = await User.findById(data.followingId);
       if (!userDetail?.setting || !userDetail.setting.private) {
-        data = { userId: currUser._id, followingId: data.followingId, requested: false };
-        await new UserFollowerTemp(data).save().then(async (re) => {
-          result.data = await new UserFollower(data).save();
-          await User.findByIdAndUpdate(data.userId, { $inc: { following: 1 } });
-          await User.findByIdAndUpdate(data.followingId, { $inc: { followers: 1 } });
-        });
+
+        let fdata = { userId: currUser._id, followingId: data.followingId };
+
+        result.data = await new UserFollower(fdata).save();
+
+
+        const followingUsers = await UserFollower.find({ userId: currUser._id, followingId: { $ne: null } }).populate('followingId');
+
+        if (followingUsers.length > 0) {
+          let cnt = 0;
+          for (let fol of followingUsers) {
+            if (fol.followingId) {
+              cnt++;
+            }
+          }
+          result.followingCnt = cnt;
+          await User.findByIdAndUpdate(currUser._id, { $set: { following: cnt } });
+        }
+
+        const followers = await UserFollower.find({ followingId: data.followingId }).populate('userId');
+
+        if (followers.length > 0) {
+          let cnta = 0;
+          for (let fol of followers) {
+            if (fol.userId) {
+              cnta++;
+            }
+          }
+          result.followersCount = cnta;
+          await User.findByIdAndUpdate(data.userId, { $set: { following: cnta } });
+        }
+
+        // await User.findByIdAndUpdate(data.followingId, { $set: { followers: followers } });
+
       } else {
         data = { userId: currUser._id, followingId: data.followingId, requested: true };
         result.data = await new UserFollowerTemp(data).save();
       }
+      result.currentUserUd = currUser._id;
+
     } catch (err) {
       result.err = err.message;
     }
     return result;
   },
+
   rejectReq: async function (id, currUser) {
     let result = {};
     try {
@@ -341,6 +376,7 @@ module.exports = {
     }
     return result;
   },
+
   listAllSentReq: async function (followObj, currUser) {
     let result = {};
     let data = null;
@@ -371,6 +407,7 @@ module.exports = {
     }
     return result;
   },
+
   listAllReq: async function (followObj, currUser) {
     let result = {};
     let data = null;
@@ -450,6 +487,7 @@ module.exports = {
     }
     return result;
   },
+
   listAllFriends: async function (followObj, currUser) {
     let result = {};
     let data = null;

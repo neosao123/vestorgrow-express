@@ -8,6 +8,7 @@ module.exports = {
       let files = [];
       for (let i = 0; i < req.files.length; i++) {
         const tmp_path = req.files[i].path;
+        console.log(tmp_path)
         let rendomNumber = Math.floor(1000 + Math.random() * 9000);
         let fileExtentsion = req.files[i].originalname.split(".");
         const file_final_name = `${new Date().getTime()}${rendomNumber}.${fileExtentsion[fileExtentsion.length - 1]}`;
@@ -72,12 +73,24 @@ module.exports = {
     let result = await postServ.getDetail(req.params.id, req.currUser);
     utils.sendResponse(result, req, res);
   },
+
   sharePost: async function (req, res) {
     let result = await postServ.sharePost(req.body, req.currUser);
     utils.sendResponse(result, req, res);
   },
+
   sharePostList: async function (req, res) {
     let result = await postServ.sharePostList(req.body, req.currUser);
     utils.sendResponse(result, req, res);
   },
+
+  newPostList: async function (req, res) {
+    let result = await postServ.newPostList(req.body, req.currUser);
+    utils.sendResponse(result, req, res);
+  },
+
+  myFeed: async function (req, res) {
+    let result = await postServ.myFeed(req.body, req.currUser);
+    utils.sendResponse(result, req, res);
+  }
 };

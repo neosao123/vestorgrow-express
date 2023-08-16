@@ -95,7 +95,39 @@ module.exports = {
     }
     return result;
   },
-
+  composeNewMessage: async function (playload, currUser) {
+    let result = {};
+    let chat = "";
+    try {
+      const messageContent = playload.content;
+      if (playload.users !== undefined) {
+        let usersForChat = playload.users.split(",");
+        if (usersForChat.length > 0) {
+          for (let item of usersForChat) {
+            let message = {};
+            let chatUser = [item, currUser._id];
+            let resp = await Chat.findOne({ users: { $all: chatUser }, isGroupChat: false });
+            if (!resp) {
+              let data = await new Chat({ users: chatUser }).save();
+              chat = data._id;
+            } else {
+              chat = resp._id;
+            }
+            message.content = messageContent;
+            message.chat = chat;
+            message.sender = currUser._id;
+            result.data = await new Message(message).save();
+            await Chat.findByIdAndUpdate(message.chat, { $set: { latestMessage: result.data._id } }, { new: true });
+          }
+        }
+      } else {
+        result.err = "Users not defined";
+      }
+    } catch (err) {
+      result.err = err.message;
+    }
+    return result;
+  },
   listAll: async function (messageObj, currUser) {
     let result = {};
     let data = null;

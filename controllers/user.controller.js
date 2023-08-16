@@ -197,8 +197,18 @@ module.exports = {
     utils.sendResponse(result, req, res);
   },
 
+  signinActivationLink: async function (req, res) {
+    let result = await UserServ.signinActivationLink(req.body.email);
+    utils.sendResponse(result, req, res);
+  },
+
   signupActiveLink: async function (req, res) {
     let result = await UserServ.signupActiveLink(req.body.email);
+    utils.sendResponse(result, req, res);
+  },
+
+  activateAccount: async function (req, res) {
+    let result = await UserServ.activateAccount(req.body);
     utils.sendResponse(result, req, res);
   },
 
@@ -225,5 +235,41 @@ module.exports = {
   mostFollowedUsers: async function (req, res) {
     let result = await UserServ.getMostFollowedUsers(req.body);
     utils.sendResponse(result, req, res);
+  },
+
+  addAccountVerified: async function (req, res) {
+    let result = await UserServ.addAccountVerified(req.body);
+    utils.sendResponse(result, req, res);
+  },
+
+  addInvestmentArray: async function (req, res) {
+    let result = await UserServ.addInvestmentArray(req.body);
+    utils.sendResponse(result, req, res);
+  },
+
+  addWebsite: async function (req, res) {
+    let result = await UserServ.addWebsite(req.body);
+    utils.sendResponse(result, req, res);
+  },
+
+  getUserPreviewData: async function (req, res) {
+    let result = await UserServ.getUserPreviewData(req.body.userId, req.currUser);
+    utils.sendResponse(result, req, res);
+  },
+
+  updateAbout: async function (req, res) {
+    let result = await UserServ.updateAbout(req.body);
+    utils.sendResponse(result, req, res);
+  },
+
+  suggestedUsers: async function (req, res) {
+    let result = await UserServ.suggestedUsers(req.currUser);
+    utils.sendResponse(result, req, res);
+  },
+
+  suggestionsByTab: async function (req, res) {
+    let result = await UserServ.suggestionsByTab(req.body, req.currUser);
+    utils.sendResponse(result, req, res);
   }
+
 };

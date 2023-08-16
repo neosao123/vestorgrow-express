@@ -27,4 +27,7 @@ router.route("/delete").post(auth, adminUserFreeCheckPermission.listAllAuth, mes
 router
   .route("/compose")
   .post(auth, adminUserFreeCheckPermission.listAllAuth, upload.any(fields), messageController.composeMessage);
+router
+  .route("/compose/new")
+  .post(auth, adminUserFreeCheckPermission.listAllAuth, upload.any(fields), messageController.composeNewMessage);
 module.exports = router;

@@ -15,17 +15,41 @@ module.exports = {
       type: "comment",
       createdBy: comment.createdBy,
     };
+    let mentUsers = comment.mentionedUsers;
+    delete comment.mentionedUsers;
     try {
       result.data = await new PostComment(comment).save();
       let post = await Post.findByIdAndUpdate(comment.postId, {
         $inc: { commentCount: 1 },
         $set: { lastActivityDate: date },
-      });
-      notificationObj.createdFor = post.createdBy;
-      if (notificationObj.createdBy + "" !== notificationObj.createdFor + "") {
+      }, { new: true });
+
+      result.postCreatedBy = post.createdBy;
+      result.commentBy = comment.createdBy;
+
+
+      if (comment.createdBy.toString() !== post.createdBy.toString()) {
+        notificationObj.createdFor = post.createdBy;
         await new Notifcation(notificationObj).save();
       }
+
+      if (mentUsers.length > 0) {
+        mentUsers.map((mentionedUser) => {
+          if (comment.createdBy + "" !== mentionedUser + "") {
+            let notificationObj = {
+              postId: comment.postId,
+              title: " tagged you in a comment",
+              type: "Tagged",
+              createdBy: comment.createdBy,
+              createdFor: mentionedUser,
+            };
+            new Notifcation(notificationObj).save();
+          }
+        });
+      }
+
     } catch (err) {
+      console.log
       result.err = err.message;
     }
     return result;

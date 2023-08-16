@@ -1,3 +1,4 @@
+const { util } = require("config");
 const likeServ = require("../services/postLike.service");
 const utils = require("../utils/utils");
 
@@ -27,4 +28,14 @@ module.exports = {
         let result = await likeServ.getDetail(req.params.id);
         utils.sendResponse(result, req, res);
     },
+
+    updateAllType: async function (req, res) {
+        let result = await likeServ.updateAllType();
+        utils.sendResponse(result, req, res);
+    },
+
+    getPostUniqueReactions: async function (req, res) {
+        let result = await likeServ.getPostUniqueReactions(req.body.postId);
+        utils.sendResponse(result, req, res);
+    }
 };

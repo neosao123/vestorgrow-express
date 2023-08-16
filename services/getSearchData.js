@@ -18,18 +18,18 @@ async function listUser(userObj, currUser) {
   if (userObj.searchText !== undefined) {
     condition = {
       $or: [
-        // {
-        //   first_name: {
-        //     $regex: ".*" + userObj.searchText + ".*",
-        //     $options: "i",
-        //   },
-        // },
-        // {
-        //   last_name: {
-        //     $regex: ".*" + userObj.searchText + ".*",
-        //     $options: "i",
-        //   },
-        // },
+        {
+          first_name: {
+            $regex: "^" + userObj.searchText + ".*",
+            $options: "i",
+          },
+        },
+        {
+          last_name: {
+            $regex: "^" + userObj.searchText + ".*",
+            $options: "i",
+          },
+        },
         {
           user_name: {
             $regex: "^" + userObj.searchText + ".*",
@@ -370,7 +370,19 @@ module.exports = {
               $regex: "^" + searchObj.searchText + ".*",
               $options: "i",
             },
-          }
+          },
+          {
+            first_name: {
+              $regex: "^" + searchObj.searchText + ".*",
+              $options: "i",
+            },
+          },
+          {
+            last_name: {
+              $regex: "^" + searchObj.searchText + ".*",
+              $options: "i",
+            },
+          },
         ],
       };
     }

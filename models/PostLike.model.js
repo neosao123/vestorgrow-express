@@ -10,6 +10,10 @@ const postLike_schema = mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
         },
+        type: {
+            type: String,
+            default: "like"
+        }
     },
     { timestamps: { createdAt: "createdAt" } }
 );

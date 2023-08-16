@@ -21,6 +21,9 @@ const { ObjectId } = require("mongodb");
 const crypto = require("crypto");
 const moment = require("moment");
 const { mongo } = require("mongoose");
+const ejs = require("ejs");
+const { link } = require("fs");
+
 module.exports = {
   add: async function (user, currUser) {
     let result = {};
@@ -58,6 +61,7 @@ module.exports = {
     }
     return result;
   },
+
   edit: async function (body, currUser) {
     let result = { data: null };
     const { password, verifyPassword, newPassword, email, _id, user_name } = body;
@@ -115,6 +119,7 @@ module.exports = {
     }
     return result;
   },
+
   addProfile: async function (body) {
     let result = { data: null };
     try {
@@ -138,6 +143,7 @@ module.exports = {
     }
     return result;
   },
+
   editSetting: async function (body, currUser) {
     let result = { data: null };
     try {
@@ -156,6 +162,7 @@ module.exports = {
     }
     return result;
   },
+
   editFirstView: async function (body, currUser) {
     let result = { data: null };
     try {
@@ -174,6 +181,7 @@ module.exports = {
     }
     return result;
   },
+
   updateOnlineStatus: async function (body, currUser) {
     let result = { data: null };
     try {
@@ -187,6 +195,7 @@ module.exports = {
     }
     return result;
   },
+
   getOnlineStatus: async function (body) {
     let result = { data: null };
     let newDate = moment().subtract(1, "m").format();
@@ -202,6 +211,7 @@ module.exports = {
     }
     return result;
   },
+
   getDetail: async function (id) {
     let result = {
       data: null,
@@ -225,7 +235,6 @@ module.exports = {
     try {
       result.data = await User.findByIdAndDelete(id);
       if (result.data) {
-        console.log(id);
         let following = await UserFollower.find({ userId: id }).then((resp) => resp.map((i) => i.followingId + ""));
         let follower = await UserFollower.find({ followingId: id }).then((resp) => resp.map((i) => i.userId + ""));
         await User.updateMany({ _id: { $in: following } }, { $inc: { followers: -1 } });
@@ -267,6 +276,7 @@ module.exports = {
     }
     return result;
   },
+
   listAll: async function (userObj, currUser) {
     let result = {};
     let data = null;
@@ -322,6 +332,7 @@ module.exports = {
 
     return result;
   },
+
   login: async function (email, password, logintype, body, reqMeta) {
     let result = {};
     try {
@@ -339,18 +350,32 @@ module.exports = {
           if (user.setting?.email_verification) {
             let otp = Math.floor(100000 + Math.random() * 900000);
             // Mail for forgot password
-            let newSub = "Vestorgrow login otp";
 
-            let newContent = "Please send this otp " + otp + " to login ";
-
-            let params = {
-              to: user.email,
-              subject: newSub,
-              text: newContent,
-            };
-            utils.emailSend(params);
             let email_otp = { otp: otp, email: user.email };
             data = await new UserOtp(email_otp).save();
+
+            let mailData = {
+              otp: otp,
+              username: user.user_name
+            };
+
+            ejs.renderFile("./views/otpverification.ejs", mailData, (err, htmlData) => {
+              if (err) {
+                return result = {
+                  result: false,
+                  message: err.toString(),
+                };
+              }
+              let subject = "Vestorgrow login otp";
+              let newContent = htmlData;
+              let params = {
+                to: data.email,
+                subject: `${subject}`,
+                text: newContent,
+              };
+              result = utils.emailSend(params);
+            });
+
             result.data = user;
             result.message = "OTP sent to your registered email";
           } else {
@@ -367,7 +392,6 @@ module.exports = {
             } else {
               await new UserLogin(reqMeta).save();
             }
-
             await User.findByIdAndUpdate({ _id: user._id }, { loginAt: new Date() });
           }
         } else {
@@ -379,6 +403,7 @@ module.exports = {
     }
     return result;
   },
+
   otpLogin: async function (email, password, otp, logintype, body, reqMeta) {
     let result = {};
     let newDate = moment().subtract(2, "m").format();
@@ -430,6 +455,7 @@ module.exports = {
     }
     return result;
   },
+
   logout: async function (body) {
     let result = {};
     try {
@@ -447,6 +473,7 @@ module.exports = {
     }
     return result;
   },
+
   forgetPassword: async function (email) {
     let validation = true;
     let result = {};
@@ -456,23 +483,39 @@ module.exports = {
 
         if (data) {
           let otp = Math.floor(100000 + Math.random() * 900000);
-          // Mail for forgot password
-          let newSub = "Vestorgrow password help arrived";
+          // Mail for forgot password        
 
-          let newContent = "Please send this otp " + otp + " to reset password ";
-
-          let params = {
-            to: data.email,
-            subject: newSub,
-            text: newContent,
+          let mailData = {
+            otp: otp,
+            username: data.user_name
           };
-          utils.emailSend(params);
+
           let email_otp = { otp: otp, email: data.email };
-          data = await new UserOtp(email_otp).save();
-          return {
-            result: true,
-            message: "Mail has been sent, please check your inbox or spam folder",
-          };
+          await new UserOtp(email_otp).save();
+
+          ejs.renderFile("./views/otpverification.ejs", mailData, (err, htmlData) => {
+            if (err) {
+              return result = {
+                result: false,
+                message: err.toString(),
+              };
+            }
+            let subject = "Vestorgrow password help arrived";
+            let newContent = htmlData;
+            let params = {
+              to: data.email,
+              subject: `${subject}`,
+              text: newContent,
+            };
+            result = utils.emailSend(params);
+          });
+
+          if (result.result === true) {
+            result.message = "Otp has been sent ot your mail, please chekc your inbox or spam folder";
+          }
+
+          return result;
+
         } else {
           throw Error("Email Id does not exists");
         }
@@ -482,6 +525,7 @@ module.exports = {
       return result;
     }
   },
+
   resetPassword: async function (email, newPassword, verifyPassword, otp) {
     let validation = true;
     let result = {};
@@ -494,9 +538,8 @@ module.exports = {
           let verifyOtp = await UserOtp.find({
             email: data.email,
             createdAt: { $gte: newDate },
-          })
-            .sort({ _id: -1 })
-            .limit(1);
+          }).sort({ _id: -1 }).limit(1);
+
           if (verifyOtp.length > 0 && verifyOtp[0].otp == otp) {
             if (newPassword === verifyPassword) {
               data.password = bcrypt.hashSync(newPassword, 10);
@@ -506,20 +549,31 @@ module.exports = {
               await data.save();
               await UserOtp.deleteMany({ email: data.email });
 
-              let subject = "Password changed for your account";
-
-              let newContent = "Your password is changed please login again with your new password";
-
-              let params = {
-                to: data.email,
-                subject: `${subject}`,
-                text: newContent,
+              var mailData = {
+                username: data.user_name
               };
-              utils.emailSend(params);
-              return {
-                result: true,
-                message: "Password for your account has been reset, please login",
-              };
+
+              ejs.renderFile("./views/resetpassoword.ejs", mailData, (err, htmlData) => {
+                if (err) {
+                  return result = {
+                    result: false,
+                    message: err.toString(),
+                  };
+                }
+                let subject = "Password changed for your account";
+                let newContent = htmlData;
+                let params = {
+                  to: data.email,
+                  subject: `${subject}`,
+                  text: newContent,
+                };
+                result = utils.emailSend(params);
+              });
+
+              if (result.result === true) {
+                result.message = "Password for your account has been reset, please login";
+              }
+              return result;
             } else {
               throw Error("your password does't match");
             }
@@ -535,6 +589,62 @@ module.exports = {
       return result;
     }
   },
+
+  signinActivationLink: async function (emailId) {
+    let validation = true;
+    let result = {};
+    try {
+      let data = await User.findOne({ email: emailId }); //,reset_password_expires:{$gt: Date}});
+
+      if (data) {
+        token = crypto.randomBytes(20).toString("hex");
+
+        data.active_token = token;
+
+        await data.save();
+
+        let mailName = data.user_name;
+
+        // Mail for forgot password
+        url = process.env.FRONTEND_BASE_URL + "/signin/active/" + token;
+
+        const mailData = {
+          username: mailName,
+          link: url
+        };
+        ejs.renderFile("./views/activationlink.ejs", mailData, (err, htmlData) => {
+          if (err) {
+            return result = {
+              result: false,
+              message: err.toString(),
+            };
+          }
+          let subject = "Vestorgrow activation link";
+          let newContent = htmlData;
+          let params = {
+            to: data.email,
+            subject: `${subject}`,
+            text: newContent,
+          };
+          result = utils.emailSend(params);
+        });
+
+        if (result.result === true) {
+          result.message = "Mail has been sent, please check your inbox or spam folder";
+        }
+
+        return result;
+      } else if (result.data === null) {
+        throw Error("Email Id does not exists");
+      } else {
+        throw Error("Validation failed");
+      }
+    } catch (err) {
+      result.err = err.message;
+      return result;
+    }
+  },
+
   signupActiveLink: async function (emailId) {
     let validation = true;
     let result = {};
@@ -550,26 +660,35 @@ module.exports = {
 
         let mailName = data.user_name;
 
-        // if (flag && flag === "admin_fogot_password") {
-        //     url = process.env.ADMIN_BASE_URL + "/reset/" + token;
-        // } else {
-        // }
         // Mail for forgot password
         url = process.env.FRONTEND_BASE_URL + "/signup/active/" + token;
-        let newSub = "Vestorgrow activation link";
 
-        let newContent = "hello " + mailName + "<br/>Please go to this link to complete your registration :- " + url;
+        const mailData = {
+          username: mailName,
+          link: url
+        };
+        ejs.renderFile("./views/activationlink.ejs", mailData, (err, htmlData) => {
+          if (err) {
+            return result = {
+              result: false,
+              message: err.toString(),
+            };
+          }
+          let subject = "Vestorgrow activation link";
+          let newContent = htmlData;
+          let params = {
+            to: data.email,
+            subject: `${subject}`,
+            text: newContent,
+          };
+          result = utils.emailSend(params);
+        });
 
-        let params = {
-          to: data.email,
-          subject: newSub,
-          text: newContent,
-        };
-        utils.emailSend(params);
-        return {
-          result: true,
-          message: "Mail has been sent, please check your inbox or spam folder",
-        };
+        if (result.result === true) {
+          result.message = "Mail has been sent, please check your inbox or spam folder";
+        }
+
+        return result;
       } else if (result.data === null) {
         throw Error("Email Id does not exists");
       } else {
@@ -580,6 +699,30 @@ module.exports = {
       return result;
     }
   },
+
+  activateAccount: async function (body) {
+    let result = {};
+    try {
+      const user = await User.findOne({ active_token: body.token });
+      if (user) {
+        result.data = await User.findByIdAndUpdate(user._id, { $set: { accountVerified: true } }, { new: true });
+        result = {
+          status: true,
+          data: result.data,
+          message: "Activated Successfully",
+        };
+      } else {
+        result = {
+          status: false,
+          message: "Invalid Token. Please login again to continue...",
+        };
+      }
+    } catch (err) {
+      result.err = err.message;
+    }
+    return result;
+  },
+
   sessionList: async function (userObj, currUser) {
     let result = {};
     let data = null;
@@ -633,6 +776,7 @@ module.exports = {
 
     return result;
   },
+
   getSearchData: async function (data, currUser) {
     let result = await getSearchData.getSearchData(data, currUser);
     return result;
@@ -659,6 +803,318 @@ module.exports = {
       };
     } catch (err) {
       result.err = err.message;
+    }
+    return result;
+  },
+
+  addAccountVerified: async function (body) {
+    let result = {};
+    try {
+      result.data = await User.updateMany({}, { $set: { accountVerified: true } }, { new: true });
+      return { message: "Updated Successfully" };
+    } catch (err) {
+      result.err = err.message;
+    }
+    return result;
+  },
+
+  addInvestmentArray: async function (body) {
+    let result = {};
+    try {
+      result.data = await User.updateMany({}, { $set: { investmentInterests: [] } }, { new: true });
+      return { message: "Updated Successfully" };
+    } catch (err) {
+      result.err = err.message;
+    }
+    return result;
+  },
+
+  addWebsite: async function (body) {
+    let result = {};
+    try {
+      result.data = await User.updateMany({}, { $set: { websiteUrl: "" } }, { new: true });
+      return { message: "Updated Successfully" };
+    } catch (err) {
+      result.err = err.message;
+    }
+    return result;
+  },
+
+  getUserPreviewData: async function (userId, currUser) {
+    let result = {};
+    try {
+      let links = [];
+      result.user = await User.findOne({ _id: userId }).select({ first_name: 1, last_name: 1, user_name: 1, profile_img: 1, followers: 1, following: 1 });
+      const postCounts = await Post.countDocuments({ createdBy: userId });
+      const posts = await Post.find({ createdBy: userId, shareType: "Public", mediaFiles: { $ne: [] } }).sort({ createdAt: -1 }).limit(3);
+      if (posts.length > 0) {
+        for (let post of posts) {
+          const mediaFiles = post.mediaFiles;
+          if (mediaFiles.length > 0) {
+            links.push(mediaFiles[0]);
+          }
+        }
+      }
+      result.followingStatus = "notfollowing";
+      let following = await UserFollower.findOne({ userId: currUser._id, followingId: userId });
+      if (following) {
+        result.followingStatus = "following";
+      } else {
+        let requested = await UserFollowerTemp.findOne({ userId: currUser._id, followingId: userId });
+        if (requested) {
+          result.followingStatus = "requested";
+        }
+      }
+
+      result.postsMediaFiles = links;
+      result.postsCount = postCounts;
+    } catch (err) {
+      result.err = err.message;
+    }
+    return result;
+  },
+
+  updateAbout: async function (body) {
+    let result = { data: null };
+    const { _id, websiteUrl, investmentInterests, bio, gender } = body;
+    try {
+      const userData = {
+        websiteUrl: websiteUrl,
+        gender: gender,
+        bio: bio,
+        investmentInterests: investmentInterests
+      }
+      result.data = await User.findByIdAndUpdate(_id, { $set: userData }, { new: true });
+      result.message = "Updated Successfully";
+    } catch (err) {
+      result.err = err.message;
+    }
+    return result;
+  },
+
+  suggestedUsers: async function (currUser) {
+    let result = {};
+
+    let sortBy = { followers: "desc" };
+    try {
+      let userIdArray = [];
+      userIdArray.push(currUser._id);
+
+      const following = await UserFollower.find({ userId: currUser._id }).select({ followingId: 1 });
+
+      let followingArr = following.map((i) => {
+        return i.followingId + "";
+      });
+
+      if (following.length > 0) {
+        for (let usr of following) {
+          userIdArray.push(usr.followingId);
+        }
+      }
+
+      let followingRequested = await UserFollowerTemp.find({ userId: currUser._id }).select({ _id: 0, followingId: 1 });
+
+      let requestedArr = followingRequested.map((i) => {
+        return i.followingId + "";
+      });
+
+      if (followingRequested.length > 0) {
+        for (let usr of followingRequested) {
+          userIdArray.push(usr.followingId);
+        }
+      }
+
+      const users = await User.find({ _id: { $nin: userIdArray } }).sort(sortBy);
+
+      if (users.length > 0) {
+        for (let user of users) {
+          if (followingArr.includes(user._id + "")) {
+            user._doc.isFollowing = "following";
+          } else if (requestedArr.includes(user._id + "")) {
+            user._doc.isFollowing = "requested";
+          } else {
+            user._doc.isFollowing = "notfollowing";
+          }
+        }
+      }
+
+      count = await User.countDocuments({ _id: { $nin: userIdArray } });
+      
+      const followingUsers = await UserFollower.find({ userId: currUser._id }).populate("followingId");
+      
+      result = {
+        userId: currUser._id,
+        followingAlready: followingUsers,
+        data: users,
+        total: count
+      };
+    } catch (err) {
+      result.err = err.message;
+    }
+    return result;
+  },
+
+  suggestionsByTab: async function (payload, currUser) {
+    const { searchText, tab } = payload;
+    const userId = currUser._id;
+    let result = {};
+
+    let following = await UserFollower.find({ userId: userId }).select({ followingId: 1 });
+
+    let followingArr = following.map((i) => {
+      return i.followingId + "";
+    });
+
+    let followingRequested = await UserFollowerTemp.find({ userId: currUser._id }).select({ _id: 0, followingId: 1 });
+
+    let requestedArr = followingRequested.map((fUser) => {
+      if (!followingArr.includes(fUser.followingId + "")) {
+        return fUser.followingId + "";
+      }
+    });
+
+    if (tab !== undefined) {
+      let condition = {
+        "_id": {
+          $ne: currUser._id
+        }
+      };
+
+      if (tab === "trending_people") {
+        if (searchText !== undefined && searchText !== "") {
+          condition = {
+            $and: [
+              { user_name: { $regex: "^" + searchText + ".*", $options: 'i' } },
+              { followers: { $gt: 0 } },
+              {
+                _id: { $ne: userId }
+              }
+            ]
+          };
+        } else {
+          condition = {
+            followers: { $gt: 0 },
+            _id: { $ne: userId }
+          };
+        }
+
+        const users = await User.find(condition).sort({ followers: -1 }).limit(60);
+
+        if (users.length > 0) {
+          for (let user of users) {
+            const uId = user._id + "";
+            if (followingArr.includes(uId)) {
+              user._doc.isFollowing = "following";
+            } else if (requestedArr.includes(uId)) {
+              user._doc.isFollowing = "requested";
+            } else {
+              user._doc.isFollowing = "notfollowing";
+            }
+          }
+        }
+
+        result = {
+          searchText: searchText,
+          tab: tab,
+          users: users
+        };
+      } else if (tab === "you_may_know") {
+        // friends of friends
+        const searchKeyword = searchText || '';
+        const pipeline = [
+          {
+            $lookup: {
+              from: 'userfollowers',
+              localField: '_id',
+              foreignField: 'followingId',
+              as: 'userfollowers'
+            }
+          },
+          {
+            $match: {
+              'userfollowers.userId': { $nin: [userId] }, // Filter users not followed by you 
+              _id: { $ne: userId }
+            }
+          },
+          {
+            $limit: 50
+          },
+          {
+            $sort: {
+              followers: -1
+            }
+          },
+          {
+            $addFields: {
+              isFollowing: "notfollowing"
+            }
+          }
+        ];
+
+        if (searchKeyword) {
+          pipeline.splice(2, 0, {
+            $match: {
+              user_name: { $regex: "^" + searchKeyword + ".*", $options: 'i' } // Filter users by name using regex
+            }
+          });
+        }
+
+        let users = await User.aggregate(pipeline);
+
+        if (users.length > 0) {
+          for (let user of users) {
+            delete user.userfollowers;
+            const uId = user._id + "";
+            if (followingArr.includes(uId)) {
+              user.isFollowing = "following";
+            } else if (requestedArr.includes(uId)) {
+              user.isFollowing = "requested";
+            }
+          }
+        }
+
+        result = {
+          searchText: searchText,
+          tab: tab,
+          users: users
+        };
+      } else {
+        //newly joined users
+        if (searchText !== undefined && searchText !== "") {
+          condition = {
+            $and: [
+              { user_name: { $regex: "^" + searchText + ".*", $options: 'i' } },
+              { _id: { $ne: userId } }
+            ]
+          };
+        } else {
+          condition = {
+            _id: { $ne: userId }
+          }
+        }
+
+        const users = await User.find(condition).sort({ createdAt: -1 }).limit(50);
+
+        if (users.length > 0) {
+          for (let user of users) {
+            if (followingArr.includes(user._id + "")) {
+              user._doc.isFollowing = "following";
+            } else if (requestedArr.includes(user._id + "")) {
+              user._doc.isFollowing = "requested";
+            } else {
+              user._doc.isFollowing = "notfollowing";
+            }
+          }
+        }
+
+        result = {
+          searchText: searchText,
+          tab: tab,
+          users: users
+        };
+      }
+    } else {
+      result.err = "Tabs is not provided";
     }
     return result;
   }

@@ -32,11 +32,8 @@ router.route("/:id")
 router.route("/list").post(auth, adminUserFreeCheckPermission.listAllAuth, postController.listAll);
 
 // routes for sharepost
-router.route("/share").post(auth,
-    adminUserFreeCheckPermission.postAuth,
-    postController.sharePost
-)
-router.route("/share/list").post(auth,
-    postController.sharePostList
-)
+router.route("/share").post(auth, adminUserFreeCheckPermission.postAuth, postController.sharePost);
+router.route("/share/list").post(auth, postController.sharePostList);
+router.route("/new/list").post(auth, postController.newPostList);
+router.route("/my/feed").post(auth, postController.myFeed);
 module.exports = router

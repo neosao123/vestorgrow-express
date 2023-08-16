@@ -29,7 +29,9 @@ router.route("/login").post(userController.login);
 router.route("/otplogin").post(userController.otpLogin);
 router.route("/logout").post(userController.logout);
 router.route("/forgot").post(userController.forgetPassword);
+router.route("/account/activate").post(userController.activateAccount);
 router.route("/sendactivationlink").post(userController.signupActiveLink);
+router.route("/send/signin/activation").post(userController.signinActivationLink);
 router.route("/addprofile").post(upload.any(fields), userController.addProfile);
 router.route("/reset").post(userController.resetPassword);
 router.route("/getsearchdata").post(auth, userController.getSearchData);
@@ -39,5 +41,16 @@ router.route("/getonlinestatus").post(auth, adminUserFreeCheckPermission.putAuth
 //mention users api 
 router.route("/mention").post(auth, userController.mentionUsers);
 router.route("/most/followed/list").post(auth, userController.mostFollowedUsers);
+
+router.route("/add/account/verified").get(userController.addAccountVerified);
+router.route("/add/investment/field").get(userController.addInvestmentArray);
+router.route("/add/website/field").get(userController.addWebsite);
+
+router.route("/preview/data").post(auth, userController.getUserPreviewData);
+router.route("/update/about").post(auth, userController.updateAbout);
+
+router.route("/suggested/users").post(auth, userController.suggestedUsers);
+
+router.route("/suggestions/tabs").post(auth, userController.suggestionsByTab);
 
 module.exports = router;

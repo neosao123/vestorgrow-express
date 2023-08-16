@@ -91,13 +91,15 @@ module.exports = {
     if (chatObj.filter !== undefined) {
       if (chatObj.filter.searchText !== undefined) {
         condition["chatName"] = {
-          $regex: ".*" + chatObj.filter.searchText + ".*",
+          //$regex: ".*" + chatObj.filter.searchText + ".*", 
           $options: "i",
         };
       }
       if (chatObj.filter.userName !== undefined) {
+        const pattern = `^${chatObj.filter.userName}`;
         userPath.match["user_name"] = {
-          $regex: ".*" + chatObj.filter.userName + ".*",
+          //$regex: ".*" + chatObj.filter.userName + ".*",
+          $regex: pattern,
           $options: "i",
         };
         // 'first_name': {$eq: phoneNumber},'last_name': {$eq: phoneNumber},
@@ -169,13 +171,13 @@ module.exports = {
         condition["$or"] = [
           {
             chatName: {
-              $regex: ".*" + chatObj.filter.searchText + ".*",
+              $regex: "^" + chatObj.filter.searchText + ".*",
               $options: "i",
             },
           },
           {
             chatKeyword: {
-              $regex: ".*" + chatObj.filter.searchText + ".*",
+              $regex: "^" + chatObj.filter.searchText + ".*",
               $options: "i",
             },
           },

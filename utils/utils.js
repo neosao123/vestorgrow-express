@@ -2,11 +2,11 @@ const jwt = require("jsonwebtoken");
 var SibApiV3Sdk = require("sib-api-v3-sdk");
 const fs = require("fs");
 module.exports = {
+  //   ================= Send grid mail send  ====================
   emailSend: async function (params) {
     try {
       SibApiV3Sdk.ApiClient.instance.authentications["api-key"].apiKey = process.env.SENDINBLUE;
-
-      new SibApiV3Sdk.TransactionalEmailsApi()
+      return new SibApiV3Sdk.TransactionalEmailsApi()
         .sendTransacEmail({
           subject: params.subject,
           sender: { email: process.env.EMAIL, name: "Vestorgrow" },
@@ -18,17 +18,30 @@ module.exports = {
         .then(
           function (data) {
             console.log(data);
+            return {
+              result: true,
+              message: "Mail Sent"
+            }
           },
           function (error) {
-            console.error(error);
+            return {
+              result: false,
+              message: error.message
+            }
           }
         );
     } catch (err) {
       console.log(err.message, "================Mail not Send================");
+      return {
+        result: false,
+        message: err.message
+      }
     }
   },
 
-  //   ================= Send grid mail send  ====================
+  emailSendNew: async function (params) {
+    return { result: true };
+  },
 
   jwtEncode: function (paylod) {
     let token = jwt.sign(paylod, process.env.JWT_KEY);
@@ -39,7 +52,7 @@ module.exports = {
     return paylodDecoded;
   },
   sendResponse: function (result, req, res) {
-    if (result.err != undefined && result.err != null && result.err.length > 0) {
+    if (result?.err !== undefined && result.err !== null && result.err.length > 0) {
       res.status(400).send(result);
     } else {
       res.send(result);

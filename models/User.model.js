@@ -118,6 +118,18 @@ const userSchema = mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    accountVerified: {
+      type: Boolean,
+      default: false,
+    },
+    investmentInterests: {
+      type: [String],
+      default: []
+    },
+    websiteUrl: {
+      type: String,
+      default: ""
+    }
   },
   { timestamps: { createdAt: "createdAt" } }
 );
