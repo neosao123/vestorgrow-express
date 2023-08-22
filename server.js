@@ -9,7 +9,7 @@ var path = require('path');
 const cors = require("cors");
 const port = process.env.PORT || 3000;
 var useragent = require("express-useragent");
-mongoose.connect("mongodb://" + process.env.DB_HOST + ":" + process.env.DB_PORT + "/" + process.env.DB_NAME, {
+mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });

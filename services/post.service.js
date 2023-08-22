@@ -487,10 +487,10 @@ module.exports = {
       });
 
       const userIdsArray = sharedPostUserArr.concat(postCreatedByOtherUsersArr);
+      const mergerd = usersFollowedByLoginUser.concat(userIdsArray);
       const loginUserArray = [loginUserId];
-
       //contact all users together
-      const allUsers = userIdsArray.concat(loginUserArray);
+      const allUsers = mergerd.concat(loginUserArray);
 
       let isActive = true;
       if (postObj.filter.is_active !== undefined && postObj.filter.is_active !== null && postObj.filter.is_active !== "") {
@@ -508,7 +508,8 @@ module.exports = {
           },
           {
             is_hidden: false,
-          }, {
+          },
+          {
             is_active: isActive
           }
         ],
@@ -614,6 +615,12 @@ module.exports = {
 
       result = {
         //filter: documentFilter,
+        // usersFollowedByLoginUser,
+        // postCreatedByOtherUsersArr,
+        // sharedPostUserArr,
+        // userIdsArray,
+        // loginUserArray,
+        // allUsers,
         count: count,
         records: data.length,
         data: data
