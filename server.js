@@ -123,7 +123,11 @@ io.on("connection", (socket) => {
       if (user._id == newMessage.sender._id) return;
       socket.in(user._id).emit("messageRecieved", newMessage);
     });
+    
   });
+  
+  
+  
 });
 
 app.use(function (err, req, res, next) {
