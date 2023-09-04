@@ -87,18 +87,20 @@ module.exports = {
       select: { first_name: 1, last_name: 1, profile_img: 1, role: 1, title: 1, user_name: 1 },
     };
     const { start, length } = chatObj;
+    console.log(chatObj)
     condition["users"] = { $in: [currUser._id] };
     if (chatObj.filter !== undefined) {
-      if (chatObj.filter.searchText !== undefined) {
+      if (chatObj.filter.isGroupChat == true && chatObj.filter.search !== undefined && chatObj.filter.search !== "") {
+
         condition["chatName"] = {
-          //$regex: ".*" + chatObj.filter.searchText + ".*", 
+          $regex: ".*" + chatObj.filter.search + ".*",
           $options: "i",
         };
       }
-      if (chatObj.filter.userName !== undefined) {
-        const pattern = `^${chatObj.filter.userName}`;
+      if (chatObj.filter.isGroupChat == false && chatObj.filter.search !== undefined  && chatObj.filter.search !== "") {
+        const pattern = `^${chatObj.filter.search}`;
         userPath.match["user_name"] = {
-          //$regex: ".*" + chatObj.filter.userName + ".*",
+          $regex: ".*" + chatObj.filter.search + ".*",
           $regex: pattern,
           $options: "i",
         };
@@ -190,13 +192,13 @@ module.exports = {
         };
         // 'first_name': {$eq: phoneNumber},'last_name': {$eq: phoneNumber},
       }
-      if (
-        chatObj.filter.isGroupChat !== undefined &&
-        chatObj.filter.isGroupChat !== null &&
-        chatObj.filter.isGroupChat !== ""
-      ) {
-        condition["isGroupChat"] = chatObj.filter.isGroupChat;
-      }
+      // if (
+      //   chatObj.filter.isGroupChat !== undefined &&
+      //   chatObj.filter.isGroupChat !== null &&
+      //   chatObj.filter.isGroupChat !== ""
+      // ) {
+      //   condition["isGroupChat"] = chatObj.filter.isGroupChat;
+      // }
     }
     // condition["users"] = { $in: [currUser._id] };
     try {
@@ -551,5 +553,59 @@ module.exports = {
       result.err = err.message;
     }
     return result;
+  },
+  TotalUnReadCount: async function (currUser) {
+    try {
+      const result = {
+
+      };
+      const condition1 = {
+        users: { $in: [currUser._id] },
+        isGroupChat: false,
+      };
+      const condition2 = {
+        users: { $in: [currUser._id] },
+        isGroupChat: true,
+      };
+
+
+      const blockedUser = await UserBlocked.find({
+        userId: currUser._id,
+      }).distinct("blockedId")
+      if (blockedUser.length > 0) {
+        condition1["users.$nin"] = blockedUser;
+      }
+
+      const chats1 = await Chat.find(condition1);
+      const chats2 = await Chat.find(condition2);
+
+      var TotalUnreadMessages1 = 0;
+      for (const chat of chats1) {
+        const unreadCount = await Message.count({
+          chat: chat._id,
+          readBy: { $nin: [currUser._id] },
+        });
+        if (unreadCount === 1) {
+          TotalUnreadMessages1 = TotalUnreadMessages1 + unreadCount;
+        }
+      }
+      result.unreadCountPersonal = TotalUnreadMessages1
+
+      var TotalUnreadMessages2 = 0;
+      for (const chat of chats2) {
+        const unreadCount = await Message.count({
+          chat: chat._id,
+          readBy: { $nin: [currUser._id] },
+        });
+        if (unreadCount === 1) {
+          TotalUnreadMessages2 = TotalUnreadMessages2 + unreadCount;
+        }
+      }
+      result.unreadCountGroup = TotalUnreadMessages2
+
+      return result;
+    } catch (err) {
+      return { err: err.message };
+    }
   },
 };
