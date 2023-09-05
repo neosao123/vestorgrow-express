@@ -9,7 +9,7 @@ var path = require('path');
 const cors = require("cors");
 const port = process.env.PORT || 3000;
 var useragent = require("express-useragent");
-mongoose.connect("mongodb://" + process.env.DB_HOST + ":" + process.env.DB_PORT + "/" + process.env.DB_NAME, {
+mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
@@ -70,6 +70,8 @@ const ReportPostRoute = require("./routes/reportPost.route");
 const TestimonialRoute = require("./routes/testimonial.route");
 const GoogleSignUpRoute = require("./routes/googleSignUp.route");
 const PaymentRoute = require("./routes/payment.route");
+const Message = require("./models/Message.model");
+const UserBlockedModel = require("./models/UserBlocked.model")
 
 // New Routes
 app.use("/api/v1/auth/google/callback", GoogleSignUpRoute);
@@ -117,12 +119,72 @@ io.on("connection", (socket) => {
 
   socket.on("newMessage", (newMessage) => {
     var chat = newMessage.users;
-
     if (!chat) return console.log("chat.users not defined");
     chat.forEach((user) => {
       if (user._id == newMessage.sender._id) return;
       socket.in(user._id).emit("messageRecieved", newMessage);
+      socket.in(user._id).emit("getUnReadCount", { chatId: "123" });
     });
+  });
+
+  socket.on("readMessage", async (data) => {
+    const { chat, messageId, receivedBy } = data;
+    await Message.findByIdAndUpdate({ _id: messageId }, { $push: { readBy: receivedBy } }, { new: true })
+  })
+
+
+  socket.on("markAsRead", async (data) => {
+    const { chat, receivedBy } = data;
+    await Message.updateMany({ chat, $nin: { readBy: [receivedBy] } }, { $push: { readBy: receivedBy } })
+  })
+
+  socket.on("forCountUnread", async (data) => {
+    const { userId } = data;
+    try {
+      const result = {};
+      const condition1 = {
+        users: { $in: [userId] },
+        isGroupChat: false,
+      };
+      const condition2 = {
+        users: { $in: [userId] },
+        isGroupChat: true,
+      };
+
+      const blockedUser = await UserBlockedModel.find({
+        userId: userId,
+      }).distinct("blockedId");
+      if (blockedUser.length > 0) {
+        condition1["users.$nin"] = blockedUser;
+      }
+
+      const chats1 = await Chat.find(condition1);
+      const chats2 = await Chat.find(condition2);
+
+      var TotalUnreadMessages1 = 0;
+      for (const chat of chats1) {
+        const unreadCount = await Message.count({
+          chat: chat._id,
+          readBy: { $nin: [userId] },
+        });
+        TotalUnreadMessages1 += unreadCount;
+      }
+      result.unreadCountPersonal = TotalUnreadMessages1;
+
+      var TotalUnreadMessages2 = 0;
+      for (const chat of chats2) {
+        const unreadCount = await Message.count({
+          chat: chat._id,
+          readBy: { $nin: [userId] },
+        });
+        TotalUnreadMessages2 += unreadCount;
+      }
+      result.unreadCountGroup = TotalUnreadMessages2;
+
+      socket.emit("unreadMessageCounts", result); // Emit the event with the result
+    } catch (err) {
+      console.error(err);
+    }
   });
 });
 

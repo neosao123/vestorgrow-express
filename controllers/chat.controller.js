@@ -122,5 +122,9 @@ module.exports = {
   suggestGroup: async function (req, res) {
     let result = await chatServ.suggestGroup(req.body, req.currUser);
     utils.sendResponse(result, req, res);
+  },
+  TotalUnReadCount: async function (req, res) {
+    let result = await chatServ.TotalUnReadCount(req.currUser)
+    utils.sendResponse(result, req, res)
   }
 };

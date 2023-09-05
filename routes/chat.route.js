@@ -5,6 +5,7 @@ const adminCheckPermission = require("../middleware/accessValidator/adminAccess"
 const adminUserFreeCheckPermission = require("../middleware/accessValidator/adminUserFreeAccess");
 const path = require("path");
 const multer = require("multer");
+const ChatService = require("../services/Chat.service");
 
 const upload = multer({
   dest: path.join(__dirname, "../uploads/temp"),
@@ -36,4 +37,5 @@ router
   .post(auth, adminUserFreeCheckPermission.putAuth, chatController.acceptInvitationLink);
 router.route("/memberDetail/:id").get(auth, chatController.getDetailMemberList);
 router.route("/suggest/group").post(auth, chatController.suggestGroup);
+router.route("/totalunreadcount").post(auth, chatController.TotalUnReadCount)
 module.exports = router;

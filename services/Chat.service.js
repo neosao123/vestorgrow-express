@@ -87,7 +87,6 @@ module.exports = {
       select: { first_name: 1, last_name: 1, profile_img: 1, role: 1, title: 1, user_name: 1 },
     };
     const { start, length } = chatObj;
-    console.log(chatObj)
     condition["users"] = { $in: [currUser._id] };
     if (chatObj.filter !== undefined) {
       if (chatObj.filter.isGroupChat == true && chatObj.filter.search !== undefined && chatObj.filter.search !== "") {
@@ -97,7 +96,7 @@ module.exports = {
           $options: "i",
         };
       }
-      if (chatObj.filter.isGroupChat == false && chatObj.filter.search !== undefined  && chatObj.filter.search !== "") {
+      if (chatObj.filter.isGroupChat == false && chatObj.filter.search !== undefined && chatObj.filter.search !== "") {
         const pattern = `^${chatObj.filter.search}`;
         userPath.match["user_name"] = {
           $regex: ".*" + chatObj.filter.search + ".*",
@@ -585,7 +584,7 @@ module.exports = {
           chat: chat._id,
           readBy: { $nin: [currUser._id] },
         });
-        if (unreadCount === 1) {
+        if (unreadCount) {
           TotalUnreadMessages1 = TotalUnreadMessages1 + unreadCount;
         }
       }
@@ -597,7 +596,7 @@ module.exports = {
           chat: chat._id,
           readBy: { $nin: [currUser._id] },
         });
-        if (unreadCount === 1) {
+        if (unreadCount) {
           TotalUnreadMessages2 = TotalUnreadMessages2 + unreadCount;
         }
       }
@@ -607,5 +606,7 @@ module.exports = {
     } catch (err) {
       return { err: err.message };
     }
-  },
-};
+  }
+
+}
+
