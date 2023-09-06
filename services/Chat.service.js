@@ -582,6 +582,7 @@ module.exports = {
       for (const chat of chats1) {
         const unreadCount = await Message.count({
           chat: chat._id,
+          sender: { $ne: currUser._id },
           readBy: { $nin: [currUser._id] },
         });
         if (unreadCount) {
@@ -594,6 +595,7 @@ module.exports = {
       for (const chat of chats2) {
         const unreadCount = await Message.count({
           chat: chat._id,
+          sender: { $ne: currUser._id },
           readBy: { $nin: [currUser._id] },
         });
         if (unreadCount) {
