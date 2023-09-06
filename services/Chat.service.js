@@ -250,15 +250,17 @@ module.exports = {
   joinGroup: async function (body, currUser) {
     let result = {};
     let userId = currUser._id;
+    let groupId = body.groupId;
     if (body.user_id) {
       userId = body.user_id;
+      console.log("USERID:", currUser._id)
     }
     try {
       if (body && body.groupId) {
+        console.log("GROUPID:", groupId)
         result.data = await Chat.findOneAndUpdate(
-          { _id: body.groupId, users: { $nin: userId } },
-          { $push: { users: userId } },
-          { new: true }
+          { _id: body.groupId, users: { $nin: [currUser._id] } },
+          { $push: { users: currUser._id } },
         );
         if (result.data) {
           await GroupInvitation.findOneAndDelete({ userId: userId, groupId: body.groupId });
