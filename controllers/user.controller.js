@@ -58,6 +58,61 @@ module.exports = {
     utils.sendResponse(result, req, res);
   },
 
+  updateProfilePicture: async function (req, res, next) {
+    if (req.files && req.files.length > 0) {
+      const tmp_path = req.files[0].path;
+      let rendomNumber = Math.floor(1000 + Math.random() * 9000);
+      let fileExtentsion = req.files[0].originalname.split(".");
+      const file_final_name = `${new Date().getTime()}${rendomNumber}.${fileExtentsion[fileExtentsion.length - 1]}`;
+      const final_path = process.env.BASE_PATH + process.env.IMAGE_DESTINATION + file_final_name;
+      final_url = process.env.ENDPOINT + process.env.IMAGE_DESTINATION + file_final_name;
+      fs.rename(tmp_path, final_path, (err) => {
+        if (err) {
+          return req.files[0].fieldname + " file linking failed";
+        }
+      });
+      req.body[req.files[0].fieldname] = final_url;
+    }
+    let oldData = await UserServ.getDetail(req.body._id);
+    let result = await UserServ.updateProfilePicture(req.body, req.currUser);
+    if (result) {
+      if (fs.existsSync(oldData.data.profile_img)) {
+        utils.deleteOldFile(oldData.data.profile_img, req.body.profile_img);
+      }
+      if (fs.existsSync(oldData.data.cover_img)) {
+        utils.deleteOldFile(oldData.data.cover_img, req.body.cover_img);
+      }
+    }
+    utils.sendResponse(result, req, res);
+  },
+  updateCoverPicture: async function (req, res, next) {
+    if (req.files && req.files.length > 0) {
+      const tmp_path = req.files[0].path;
+      let rendomNumber = Math.floor(1000 + Math.random() * 9000);
+      let fileExtentsion = req.files[0].originalname.split(".");
+      const file_final_name = `${new Date().getTime()}${rendomNumber}.${fileExtentsion[fileExtentsion.length - 1]}`;
+      const final_path = process.env.BASE_PATH + process.env.IMAGE_DESTINATION + file_final_name;
+      final_url = process.env.ENDPOINT + process.env.IMAGE_DESTINATION + file_final_name;
+      fs.rename(tmp_path, final_path, (err) => {
+        if (err) {
+          return req.files[0].fieldname + " file linking failed";
+        }
+      });
+      req.body[req.files[0].fieldname] = final_url;
+    }
+    let oldData = await UserServ.getDetail(req.body._id);
+    let result = await UserServ.updateCoverPicture(req.body, req.currUser);
+    if (result) {
+      if (fs.existsSync(oldData.data.profile_img)) {
+        utils.deleteOldFile(oldData.data.profile_img, req.body.profile_img);
+      }
+      if (fs.existsSync(oldData.data.cover_img)) {
+        utils.deleteOldFile(oldData.data.cover_img, req.body.cover_img);
+      }
+    }
+    utils.sendResponse(result, req, res);
+  },
+
   addProfile: async function (req, res, next) {
     if (req.files && req.files.length > 0) {
       for (let i = 0; i < req.files.length; i++) {

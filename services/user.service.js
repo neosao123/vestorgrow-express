@@ -63,10 +63,6 @@ module.exports = {
   },
 
 
-  updateProfilePicture: async function () {
-
-  },
-
   edit: async function (body, currUser) {
     let result = { data: null };
     const { password, verifyPassword, newPassword, email, _id, user_name } = body;
@@ -119,6 +115,30 @@ module.exports = {
         message: "Updated Successfully",
       };
       // return { message: "Updated Successfully" };
+    } catch (err) {
+      result.err = err.message;
+    }
+    return result;
+  },
+
+
+  updateProfilePicture: async function (body, currUser) {
+    let result = {
+      data: null
+    }
+    try {
+      result.data = await User.findByIdAndUpdate(body._id, { $set: body }, { new: true })
+    } catch (err) {
+      result.err = err.message;
+    }
+    return result;
+  },
+  updateCoverPicture: async function (body, currUser) {
+    let result = {
+      data: null
+    }
+    try {
+      result.data = await User.findByIdAndUpdate(body._id, { $set: body }, { new: true })
     } catch (err) {
       result.err = err.message;
     }

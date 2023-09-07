@@ -18,6 +18,14 @@ router
   .route("/")
   .post(upload.any(fields), userController.add)
   .put(auth, adminUserFreeCheckPermission.putAuth, upload.any(fields), userController.edit);
+
+router
+  .route("/editprofilepicture")
+  .post(upload.any(fields), userController.updateProfilePicture);
+router
+  .route("/editcoverimage")
+  .post(upload.any(fields), userController.updateCoverPicture);
+
 router.route("/setting").post(auth, adminUserFreeCheckPermission.postAuth, userController.editSetting);
 router
   .route("/:id")
