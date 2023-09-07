@@ -62,6 +62,11 @@ module.exports = {
     return result;
   },
 
+
+  updateProfilePicture: async function () {
+
+  },
+
   edit: async function (body, currUser) {
     let result = { data: null };
     const { password, verifyPassword, newPassword, email, _id, user_name } = body;
@@ -939,9 +944,9 @@ module.exports = {
       }
 
       count = await User.countDocuments({ _id: { $nin: userIdArray } });
-      
+
       const followingUsers = await UserFollower.find({ userId: currUser._id }).populate("followingId");
-      
+
       result = {
         userId: currUser._id,
         followingAlready: followingUsers,
