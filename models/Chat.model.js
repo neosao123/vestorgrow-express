@@ -37,6 +37,7 @@ const chat_schema = mongoose.Schema(
         ref: "User",
       },
     ],
+    colour: [String],
     latestMessage: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Message",

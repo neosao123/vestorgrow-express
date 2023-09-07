@@ -10,7 +10,7 @@ module.exports = {
     try {
       let resp = await Chat.findOne({ users: { $all: chat.users }, isGroupChat: false });
       if (!resp || chat.isGroupChat) {
-        result.data = await new Chat(chat).save();
+        result.data = await new Chat({ ...chat, colour: ["#255a5e"] }).save();
         if (chat.isGroupChat) {
           let notificationObj = {
             groupId: result.data._id,
@@ -247,23 +247,55 @@ module.exports = {
     }
     return result;
   },
+  // joinGroup: async function (body, currUser) {
+  //   let result = {};
+  //   let userId = currUser._id;
+  //   let groupId = body.groupId;
+  //   if (body.user_id) {
+  //     userId = body.user_id;
+  //     console.log("USERID:", currUser._id)
+  //   }
+  //   try {
+  //     if (body && body.groupId) {
+  //       console.log("GROUPID:", groupId)
+  //       result.data = await Chat.findOneAndUpdate(
+  //         { _id: body.groupId, users: { $nin: [currUser._id] } },
+  //         { $push: { users: currUser._id } },
+  //       );
+  //       if (result.data) {
+  //         await GroupInvitation.findOneAndDelete({ userId: userId, groupId: body.groupId });
+  //       }
+  //       return { message: "Updated Successfully" };
+  //     }
+  //   } catch (err) {
+  //     result.err = err.message;
+  //   }
+  //   return result;
+  // },
   joinGroup: async function (body, currUser) {
     let result = {};
     let userId = currUser._id;
-    let groupId = body.groupId;
     if (body.user_id) {
       userId = body.user_id;
-      console.log("USERID:", currUser._id)
     }
     try {
       if (body && body.groupId) {
-        console.log("GROUPID:", groupId)
+        let randomColor;
+        const chat = await Chat.findOne({ _id: body.groupId });
+        do {
+          randomColor = "#" + Math.floor(Math.random() * 16777215).toString(16);
+        } while (chat.colour.includes(randomColor));
+
         result.data = await Chat.findOneAndUpdate(
           { _id: body.groupId, users: { $nin: [currUser._id] } },
-          { $push: { users: currUser._id } },
+          { $push: { users: currUser._id, colour: randomColor } },
+          { new: true }
         );
         if (result.data) {
-          await GroupInvitation.findOneAndDelete({ userId: userId, groupId: body.groupId });
+          await GroupInvitation.findOneAndDelete({
+            userId: currUser._id,
+            groupId: body.groupId,
+          });
         }
         return { message: "Updated Successfully" };
       }
@@ -319,32 +351,72 @@ module.exports = {
     }
     return result;
   },
+  // leaveGroup: async function (body, currUser) {
+  //   let result = {};
+  //   try {
+  //     if (body && body.groupId) {
+  //       let data = await Chat.findById(body.groupId).exec();
+  //       if (data) {
+  //         data.users = data.users.filter((i) => i + "" !== currUser._id + "");
+  //         await data.save();
+  //       }
+  //       return { message: "Updated Successfully" };
+  //     }
+  //   } catch (err) {
+  //     result.err = err.message;
+  //   }
+  //   return result;
+  // },
   leaveGroup: async function (body, currUser) {
     let result = {};
     try {
       if (body && body.groupId) {
         let data = await Chat.findById(body.groupId).exec();
         if (data) {
-          data.users = data.users.filter((i) => i + "" !== currUser._id + "");
-          await data.save();
+          const userIndex = data.users.indexOf(currUser._id);
+          if (userIndex !== -1) {
+            data.users.splice(userIndex, 1);
+            data.colour.splice(userIndex, 1); // Remove corresponding color
+            await data.save();
+          }
+          return { message: "Updated Successfully" };
         }
-        return { message: "Updated Successfully" };
       }
     } catch (err) {
       result.err = err.message;
     }
     return result;
   },
+  // removeFromGroup: async function (body, currUser) {
+  //   let result = {};
+  //   try {
+  //     if (body && body.groupId) {
+  //       let data = await Chat.findById(body.groupId).exec();
+  //       if (data) {
+  //         data.users = data.users.filter((i) => i + "" !== body.userId + "");
+  //         await data.save();
+  //       }
+  //       return { message: "Updated Successfully" };
+  //     }
+  //   } catch (err) {
+  //     result.err = err.message;
+  //   }
+  //   return result;
+  // },
   removeFromGroup: async function (body, currUser) {
     let result = {};
     try {
-      if (body && body.groupId) {
+      if (body && body.groupId && body.userId) {
         let data = await Chat.findById(body.groupId).exec();
         if (data) {
-          data.users = data.users.filter((i) => i + "" !== body.userId + "");
-          await data.save();
+          const userIndex = data.users.indexOf(body.userId);
+          if (userIndex !== -1) {
+            data.users.splice(userIndex, 1);
+            data.colour.splice(userIndex, 1); // Remove corresponding color
+            await data.save();
+          }
+          return { message: "Updated Successfully" };
         }
-        return { message: "Updated Successfully" };
       }
     } catch (err) {
       result.err = err.message;
