@@ -38,4 +38,5 @@ router
 router.route("/memberDetail/:id").get(auth, chatController.getDetailMemberList);
 router.route("/suggest/group").post(auth, chatController.suggestGroup);
 router.route("/totalunreadcount").post(auth, chatController.TotalUnReadCount)
+router.route("/addcolors").post(chatController.AddColors)
 module.exports = router;

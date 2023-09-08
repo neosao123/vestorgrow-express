@@ -126,5 +126,10 @@ module.exports = {
   TotalUnReadCount: async function (req, res) {
     let result = await chatServ.TotalUnReadCount(req.currUser)
     utils.sendResponse(result, req, res)
+  },
+  AddColors: async function (req, res) {
+    let result = await chatServ.AddColors()
+    utils.sendResponse(result, req, res)
   }
+
 };

@@ -682,6 +682,31 @@ module.exports = {
     } catch (err) {
       return { err: err.message };
     }
+  },
+
+
+  AddColors: async function () {
+    try {
+      const array = await Chat.find()
+      array.forEach(async (el) => {
+        if (el.isGroupChat === true) {
+          let colorsArray = [];
+          for (let i = 0; i < el.users.length; i++) {
+            let randomColor = "#" + Math.floor(Math.random() * 16777215).toString(16);
+            if (!colorsArray.includes(randomColor)) {
+              colorsArray.push(randomColor)
+            }
+          }
+          await Chat.findByIdAndUpdate(el._id, { $set: { colour: colorsArray } }, { new: true })
+        }
+      })
+      const result = await Chat.find()
+      return result;
+    } catch (err) {
+      return {
+        err: err.message
+      };
+    }
   }
 
 }
