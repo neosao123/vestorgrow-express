@@ -104,9 +104,7 @@ module.exports = {
   generateUsername: (baseUsername) => {
     const randomChars = "0123456789abcdefghijklmnopqrstuvwxyz";
     const randomSuffix = Array.from({ length: 5 }, () => randomChars[Math.floor(Math.random() * randomChars.length)]).join("");
-    
     const instagramUsername = `${baseUsername}_${randomSuffix}`;
-    
     return instagramUsername;
   }
 };
