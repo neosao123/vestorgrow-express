@@ -36,6 +36,7 @@ app.use(useragent.express());
 app.use(cors({
   origin: "*"
 }));
+app.use("/uploads/Avatars", express.static("uploads"));
 app.use("/uploads", express.static("uploads"));
 app.use("/assets", express.static("assets"));
 app.set('views', path.join(__dirname, 'views'));
@@ -72,6 +73,9 @@ const GoogleSignUpRoute = require("./routes/googleSignUp.route");
 const PaymentRoute = require("./routes/payment.route");
 const Message = require("./models/Message.model");
 const UserBlockedModel = require("./models/UserBlocked.model")
+const MobileUserRoute = require("./routes/mobileUser.route");
+const AppleUserRoute = require("./routes/appleUser.route");
+const CountryRoute = require("./routes/country.route");
 
 // New Routes
 app.use("/api/v1/auth/google/callback", GoogleSignUpRoute);
@@ -102,6 +106,9 @@ app.use("/message", MessageRoute);
 app.use("/globalmessage", GlobalMessageRoute);
 app.use("/report", ReportPostRoute);
 app.use("/payment", PaymentRoute);
+
+// sajalsahu-new-routes
+app.use("/", MobileUserRoute, CountryRoute, AppleUserRoute);
 
 let server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });

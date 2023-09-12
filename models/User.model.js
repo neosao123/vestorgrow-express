@@ -16,17 +16,10 @@ const userSchema = mongoose.Schema(
     email: {
       type: String,
     },
-    bio: {
-      type: String,
-    },
     gender: {
       type: String,
       default: "",
-    },
-    password: {
-      type: String,
-      select: false,
-    },
+    },   
     reset_password_token: {
       type: String,
     },
@@ -129,10 +122,59 @@ const userSchema = mongoose.Schema(
     websiteUrl: {
       type: String,
       default: ""
-    }
+    },
+    // Mobile User Needed Keys
+    full_name: {
+      type: String,
+    },
+    mobile_no: {
+      type: String,
+    },
+    countryCode: {
+      type: String,
+    },
+    emailOTP: {
+      type: Number,
+    },
+    mobileOTP: {
+      type: Number,
+    },
+    isMobileVerified: {
+      type: Boolean,
+      default: false,
+    },
+    isSocialLogin: {
+      type: Boolean,
+      default: false
+    },
+    bio: {
+      type: String,default:""
+    },
+    password: {
+      type: String,
+      default: null,
+      select: false
+    },
+    is_delete: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: { createdAt: "createdAt" } }
 );
+
+
+userSchema.pre("findOneAndUpdate", function (next) {
+  const update = this.getUpdate();
+  if (update.password) {
+    let salt = bcrypt.genSaltSync(Number(process.env.SALT_ROUNDS)); 
+    let hash = bcrypt.hashSync(update.password, salt); 
+    console.log(hash);
+    update.password = hash
+  }
+  next();
+});
+
 userSchema.methods.comparePassword = function (password) {
   return bcrypt.compareSync(password, this.hash_password);
 };

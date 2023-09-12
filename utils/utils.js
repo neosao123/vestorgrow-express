@@ -101,4 +101,12 @@ module.exports = {
     let min = Math.floor((sec % 3600) / 60);
     return `${hr}h ${min}m`;
   },
+  generateUsername: (baseUsername) => {
+    const randomChars = "0123456789abcdefghijklmnopqrstuvwxyz";
+    const randomSuffix = Array.from({ length: 5 }, () => randomChars[Math.floor(Math.random() * randomChars.length)]).join("");
+    
+    const instagramUsername = `${baseUsername}_${randomSuffix}`;
+    
+    return instagramUsername;
+  }
 };

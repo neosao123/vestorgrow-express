@@ -984,7 +984,6 @@ module.exports = {
     const userId = currUser._id;
     let result = {};
 
-
     let following = await UserFollower.find({ userId: userId }).select({ followingId: 1 });
 
     let followingArr = following.map((i) => {
@@ -998,6 +997,7 @@ module.exports = {
         return fUser.followingId + "";
       }
     });
+
     if (tab !== undefined) {
       let condition = {
         "_id": {
@@ -1022,6 +1022,7 @@ module.exports = {
             _id: { $ne: userId }
           };
         }
+
         const users = await User.find(condition).sort({ followers: -1 }).limit(60);
 
         if (users.length > 0) {
@@ -1035,24 +1036,12 @@ module.exports = {
               user._doc.isFollowing = "notfollowing";
             }
           }
-
         }
-
-        let Users = [];
-        if (users.length > 0) {
-          Users = users.filter((el) => {
-            if (el._doc.isFollowing === "notfollowing") {
-              return el;
-            }
-          })
-        }
-
-
 
         result = {
           searchText: searchText,
           tab: tab,
-          users: Users
+          users: users
         };
       } else if (tab === "you_may_know") {
         // friends of friends
@@ -1109,19 +1098,10 @@ module.exports = {
           }
         }
 
-        let Users = [];
-        if (users.length > 0) {
-          Users = users.filter((el) => {
-            if (el.isFollowing !== "following" && el.isFollowing !== "requested") {
-              return el;
-            }
-          })
-        }
-
         result = {
           searchText: searchText,
           tab: tab,
-          users: Users
+          users: users
         };
       } else {
         //newly joined users
@@ -1152,20 +1132,10 @@ module.exports = {
           }
         }
 
-
-        let Users = [];
-        if (users.length > 0) {
-          Users = users.filter((el) => {
-            if (el._doc.isFollowing === "notfollowing") {
-              return el;
-            }
-          })
-        }
-
         result = {
           searchText: searchText,
           tab: tab,
-          users: Users
+          users: users
         };
       }
     } else {
