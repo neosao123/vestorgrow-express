@@ -9,9 +9,15 @@ const userSchema = mongoose.Schema(
     },
     first_name: {
       type: String,
+      default: ""
     },
     last_name: {
       type: String,
+      default: ""
+    },
+    full_name: {
+      type: String,
+      default: ""
     },
     email: {
       type: String,
@@ -19,7 +25,7 @@ const userSchema = mongoose.Schema(
     gender: {
       type: String,
       default: "",
-    },   
+    },
     reset_password_token: {
       type: String,
     },
@@ -148,7 +154,7 @@ const userSchema = mongoose.Schema(
       default: false
     },
     bio: {
-      type: String,default:""
+      type: String, default: ""
     },
     password: {
       type: String,
@@ -167,8 +173,8 @@ const userSchema = mongoose.Schema(
 userSchema.pre("findOneAndUpdate", function (next) {
   const update = this.getUpdate();
   if (update.password) {
-    let salt = bcrypt.genSaltSync(Number(process.env.SALT_ROUNDS)); 
-    let hash = bcrypt.hashSync(update.password, salt); 
+    let salt = bcrypt.genSaltSync(Number(process.env.SALT_ROUNDS));
+    let hash = bcrypt.hashSync(update.password, salt);
     console.log(hash);
     update.password = hash
   }

@@ -38,10 +38,12 @@ module.exports = {
       if (checkUserName.length === 0) {
         if (CheckEmail.length === 0) {
           let salt = bcrypt.genSaltSync(saltRounds);
-
           let hash = bcrypt.hashSync(randompwd, salt);
           user.password = hash;
           user.setting = {};
+
+          user.full_name = user.first_name + " " + user.last_name;
+
           result.data = await new User(user).save();
           result.data = await User.findOne({ _id: ObjectId(result.data._id) });
           this.signupActiveLink(user.email);
@@ -61,7 +63,6 @@ module.exports = {
     }
     return result;
   },
-
 
   edit: async function (body, currUser) {
     let result = { data: null };
@@ -105,6 +106,8 @@ module.exports = {
         let hash = bcrypt.hashSync(newPassword, salt); // create hash
         body.password = hash; // setting hash password to the original password
 
+        body.full_name = body.first_name + " " + body.last_name;
+
         //saving the new data
         result.data = await User.findByIdAndUpdate(body._id, { $set: body }, { new: true });
       } else {
@@ -121,7 +124,6 @@ module.exports = {
     return result;
   },
 
-
   updateProfilePicture: async function (body, currUser) {
     let result = {
       data: null
@@ -133,6 +135,7 @@ module.exports = {
     }
     return result;
   },
+
   updateCoverPicture: async function (body, currUser) {
     let result = {
       data: null
@@ -145,14 +148,15 @@ module.exports = {
     return result;
   },
 
-  addProfile: async function (body) {
+  ddProfile: async function (body) {
     let result = { data: null };
     try {
       const usr = await User.findOne({ active_token: body.active_token });
       if (usr) {
         let activeToken = body.active_token;
-        body.active_token = "";
+        // body.active_token = "";
         result.data = await User.findOneAndUpdate({ active_token: activeToken }, { $set: body }, { new: true });
+        await UserSteps.findOneAndUpdate({ userId: usr._id }, { ProfileUpdates: true }, { new: true })
         result.token = utils.jwtEncode({ email: usr.email, userId: usr._id });
         return {
           result: result.data,
@@ -245,6 +249,12 @@ module.exports = {
     try {
       if (id) {
         result.data = await User.findById(id);
+        const res = await UserSteps.findOne({ userId: id })
+        if (res) {
+          result.data._doc.ProfileUpdates = res.ProfileUpdates;
+          result.data._doc.UserSuggestions = res.UserSuggestions;
+          result.data._doc.groupSuggestion = res.groupSuggestion;
+        }
       } else {
         throw Error("User not found");
       }
@@ -402,9 +412,21 @@ module.exports = {
             });
 
             result.data = user;
+            const res = await UserSteps.findOne({ userId: user._id })
+            if (res) {
+              result.data._doc.ProfileUpdates = res.ProfileUpdates;
+              result.data._doc.UserSuggestions = res.UserSuggestions;
+              result.data._doc.groupSuggestion = res.groupSuggestion;
+            }
             result.message = "OTP sent to your registered email";
           } else {
             result.data = user;
+            const res = await UserSteps.findOne({ userId: user._id })
+            if (res) {
+              result.data._doc.ProfileUpdates = res.ProfileUpdates;
+              result.data._doc.UserSuggestions = res.UserSuggestions;
+              result.data._doc.groupSuggestion = res.groupSuggestion;
+            }
             result.token = utils.jwtEncode({ email: user.email, userId: user._id, deviceId: body.deviceId });
             reqMeta.user_id = user._id;
             reqMeta.device_id = body.device_id;
@@ -426,6 +448,7 @@ module.exports = {
     } catch (err) {
       return (result.err = err.message);
     }
+    console.log("RESULT:", result)
     return result;
   },
 

@@ -85,6 +85,7 @@ module.exports = {
     }
     utils.sendResponse(result, req, res);
   },
+
   updateCoverPicture: async function (req, res, next) {
     if (req.files && req.files.length > 0) {
       const tmp_path = req.files[0].path;

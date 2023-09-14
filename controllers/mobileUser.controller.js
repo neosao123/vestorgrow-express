@@ -181,7 +181,7 @@ module.exports = {
     } else {
       filename = "";
     }
-    const final_url = process.env.IMAGE_DESTINATION + filename;
+    const final_url = process.env.BASE_PATH + process.env.IMAGE_DESTINATION + filename;
     const result = await MobileUserService.updateProfileImg(
       req.currUser,
       final_url

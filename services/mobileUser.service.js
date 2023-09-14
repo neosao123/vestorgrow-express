@@ -60,6 +60,7 @@ module.exports = {
       status: status
     };
   },
+
   add: async function (user) {
     let result = {};
     var updateUser = user;
@@ -105,7 +106,8 @@ module.exports = {
       result.message = err.message;
     }
     return result;
-  }, 
+  },
+
   changeEmail: async function (currUser, email) {
     let result = {};
     try {
@@ -160,6 +162,7 @@ module.exports = {
     }
     return result;
   },
+
   verifyEmail: async function (currUser, otp, isTwoStepVerify, reqMeta) {
     let result = {};
     try {
@@ -203,6 +206,7 @@ module.exports = {
     }
     return result;
   },
+
   addPassword: async (currUser, data, token, reqMeta) => {
     let result = {};
     try {
@@ -240,6 +244,7 @@ module.exports = {
     }
     return result;
   },
+
   update_username: async (currUser, user_name) => {
     let result = {};
     try {
@@ -280,6 +285,7 @@ module.exports = {
     }
     return result;
   },
+
   resendOtp: async function (currUser, sendOtpIn) {
     let result = {};
     try {
@@ -303,6 +309,7 @@ module.exports = {
     }
     return result;
   },
+
   updateBio: async (currUser, bio) => {
     let result = {};
     try {
@@ -326,8 +333,8 @@ module.exports = {
     }
     return result;
   },
-  updateProfileImg: async (currUser, image) => {
 
+  updateProfileImg: async (currUser, image) => {
     let result = {};
     try {
       const findUser = await MobileUser.findById(ObjectId(currUser._id));
@@ -361,6 +368,7 @@ module.exports = {
 
     return result;
   },
+
   socialLogin: async function (body, reqMeta) {
     const { email, device_id } = body;
 
@@ -427,6 +435,7 @@ module.exports = {
     }
     return result;
   },
+
   login: async function (body, reqMeta) {
     console.log("body::", body);
     const { email, password, device_id } = body;
@@ -436,8 +445,11 @@ module.exports = {
         throw Error("All fields required");
       }
       let user = await MobileUser.findOne({ $or: [{ email: email }, { user_name: email }] }).select("+password");
-      if (user.length != 0 && user.accountVerified && user.is_active && !user.is_delete && await bcrypt.compare(password, user.password)) {
+      if (user != null && user.length != 0 && user.accountVerified && user.is_active && !user.is_delete) {
 
+        if (await bcrypt.compare(password, user.password)) {
+          throw Error("invaild credentials!");
+        }
         if (user.setting?.email_verification) {
           result.status = 202;
           result.message = "Otp Verification Required";
@@ -495,6 +507,7 @@ module.exports = {
 
     return result;
   },
+
   forgotPassword: async function (user) {
     const { email, device_id } = user;
     let result = {};
@@ -526,6 +539,7 @@ module.exports = {
     }
     return result;
   },
+
   getUserSuggestion: async (currUser, body) => {
     const userNumberArray = JSON.parse(JSON.stringify(body.userPhoneList));
     var arrayData = [];
@@ -609,6 +623,7 @@ module.exports = {
     result.popularUser = popularUser;
     return result;
   },
+
   getAvatarImages: async () => {
     const images = await AvatarImages.find();
     console.log("images==>", images);

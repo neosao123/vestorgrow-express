@@ -8,6 +8,8 @@ const Notifcation = require("../models/Notification.model");
 const Postkeyword = require("../models/PostKeywords.model");
 const { default: mongoose } = require("mongoose");
 const { post } = require("../routes/post.route");
+const ffmpeg = require('fluent-ffmpeg');
+
 module.exports = {
   add: async function (post, currUser) {
     let date = new Date();

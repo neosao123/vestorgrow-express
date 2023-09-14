@@ -17,13 +17,14 @@ module.exports = {
         })
         .then(
           function (data) {
-            console.log(data);
+            //console.log(data);
             return {
               result: true,
               message: "Mail Sent"
             }
           },
           function (error) {
+            //console.log("mailerr", error);
             return {
               result: false,
               message: error.message
@@ -31,7 +32,7 @@ module.exports = {
           }
         );
     } catch (err) {
-      console.log(err.message, "================Mail not Send================");
+      //console.log(err.message, "================Mail not Send================");
       return {
         result: false,
         message: err.message
