@@ -5,6 +5,7 @@ module.exports = {
     add: async function (req, res) {
         let faq = req.body;
         let result = await commentServ.save(faq);
+        
         utils.sendResponse(result, req, res);
     },
 

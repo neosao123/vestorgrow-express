@@ -37,6 +37,8 @@ router
   .post(auth, adminUserFreeCheckPermission.putAuth, chatController.acceptInvitationLink);
 router.route("/memberDetail/:id").get(auth, chatController.getDetailMemberList);
 router.route("/suggest/group").post(auth, chatController.suggestGroup);
-router.route("/totalunreadcount").post(auth, chatController.TotalUnReadCount)
-router.route("/addcolors").post(chatController.AddColors)
+router.route("/totalunreadcount").post(auth, chatController.TotalUnReadCount);
+router.route("/addcolors").post(chatController.AddColors);
+router.route("/profile/group/list").post(auth, adminUserFreeCheckPermission.putAuth, chatController.profileChatGroupList);
+
 module.exports = router;

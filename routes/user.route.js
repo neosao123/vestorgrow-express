@@ -61,4 +61,6 @@ router.route("/suggested/users").post(auth, userController.suggestedUsers);
 
 router.route("/suggestions/tabs").post(auth, userController.suggestionsByTab);
 
+router.route("/set/full-names").get(userController.addFullNamesToExistingUsers);
+
 module.exports = router;

@@ -8,16 +8,20 @@ const Notifcation = require("../models/Notification.model");
 module.exports = {
   save: async function (comment) {
     let result = {};
-    let date = new Date();
-    let notificationObj = {
-      postId: comment.postId,
-      title: "commented on your post",
-      type: "comment",
-      createdBy: comment.createdBy,
-    };
-    let mentUsers = comment.mentionedUsers;
-    delete comment.mentionedUsers;
+
     try {
+
+      let date = new Date();
+      let notificationObj = {
+        postId: comment.postId,
+        title: "commented on your post",
+        type: "comment",
+        createdBy: comment.createdBy,
+      };
+
+      let mentUsers = comment.mentionedUsers ?? [];
+      delete comment.mentionedUsers;
+
       result.data = await new PostComment(comment).save();
       let post = await Post.findByIdAndUpdate(comment.postId, {
         $inc: { commentCount: 1 },
@@ -26,7 +30,6 @@ module.exports = {
 
       result.postCreatedBy = post.createdBy;
       result.commentBy = comment.createdBy;
-
 
       if (comment.createdBy.toString() !== post.createdBy.toString()) {
         notificationObj.createdFor = post.createdBy;
@@ -47,32 +50,32 @@ module.exports = {
           }
         });
       }
-
     } catch (err) {
-      console.log
       result.err = err.message;
     }
     return result;
   },
+
   edit: async function (body) {
     let result = {};
     try {
       if (body && body._id) {
         result.data = await PostComment.findByIdAndUpdate(body._id, { $set: body }, { new: true });
-        return { message: "Updated Successfully" };
+        result.message = "Updated Successfully";
       }
     } catch (err) {
       result.err = err.message;
     }
     return result;
   },
+
   delete: async function (id) {
     let result = {};
     try {
       result.data = await PostComment.findByIdAndDelete(id);
       await PostReply.deleteMany({ commentId: id });
       await Post.findByIdAndUpdate(result.data.postId, { $inc: { commentCount: -1 } });
-      return { message: "Record deleted successfully" };
+      result.message = "Record deleted successfully";
     } catch (err) {
       result.err = err.message;
     }
@@ -142,7 +145,7 @@ module.exports = {
       if (id) {
         result.data = await PostComment.findById(id);
       } else {
-        result.err = ["Record not found"];
+        result.err = "Record not found";
       }
     } catch (err) {
       result.err = err.message;

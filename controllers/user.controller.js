@@ -12,9 +12,6 @@ module.exports = {
         const file_final_name = `${new Date().getTime()}${rendomNumber}.${fileExtentsion[fileExtentsion.length - 1]}`;
         const final_path = process.env.BASE_PATH + process.env.IMAGE_DESTINATION + file_final_name;
         final_url = process.env.ENDPOINT + process.env.IMAGE_DESTINATION + file_final_name;
-
-        console.log(final_path);
-
         fs.rename(tmp_path, final_path, (err) => {
           if (err) {
             return req.files[i].fieldname + " file linking failed";
@@ -326,6 +323,10 @@ module.exports = {
   suggestionsByTab: async function (req, res) {
     let result = await UserServ.suggestionsByTab(req.body, req.currUser);
     utils.sendResponse(result, req, res);
+  },
+  
+  addFullNamesToExistingUsers: async function (req, res) {
+    let result = await UserServ.addFullNamesToExistingUsers();
+    utils.sendResponse(result, req, res);
   }
-
 };

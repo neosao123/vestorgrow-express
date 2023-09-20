@@ -36,6 +36,7 @@ module.exports = {
     }
     return result;
   },
+
   edit: async function (body) {
     let result = {};
     try {
@@ -48,6 +49,7 @@ module.exports = {
     }
     return result;
   },
+
   delete: async function (id) {
     let result = {};
     let toBeDeleted = [];
@@ -64,6 +66,7 @@ module.exports = {
     }
     return result;
   },
+
   deleteChat: async function (chat, currUser) {
     let result = {};
     try {
@@ -76,6 +79,7 @@ module.exports = {
     }
     return result;
   },
+
   listAll: async function (chatObj, currUser) {
     let result = {};
     let data = null;
@@ -156,6 +160,76 @@ module.exports = {
     }
     return result;
   },
+
+  profileChatGroupList: async function (payload) {
+    let result = {};
+    try {
+
+      console.log(payload);
+
+      let data = null;
+      let count;
+      let condition = {};
+      let userPath = {
+        path: "users",
+        match: {},
+        select: { first_name: 1, last_name: 1, profile_img: 1, role: 1, title: 1, user_name: 1 },
+      };
+      const { start, length } = payload;
+      condition["users"] = { $in: [payload.userId] };
+
+      if (payload.search !== undefined && payload.search !== "") {
+        condition["chatName"] = {
+          $regex: ".*" + payload.search + ".*",
+          $options: "i",
+        };
+      }
+
+      condition["isGroupChat"] = true;
+
+      condition["users"] = { $in: [payload.userId] };
+
+
+      let blockedUser = await (
+        await UserBlocked.find({ userId: payload.userId }, { blockedId: 1 })
+      ).map((resp) => resp.blockedId + "");
+
+      condition["users"]["$nin"] = blockedUser;
+
+      if (start === undefined || length === undefined) {
+        data = await Chat.find(condition)
+          .populate(userPath)
+          .populate("latestMessage")
+          .sort({
+            updatedAt: "desc",
+          })
+          .then((orders) => orders.filter((order) => order.users.length != 0));
+      } else {
+        data = await Chat.find(condition)
+          .populate(userPath)
+          .populate("latestMessage")
+          .limit(parseInt(length))
+          .skip(start)
+          .sort({
+            updatedAt: "desc",
+          })
+          .then((orders) => orders.filter((order) => order.users.length != 0));
+      }
+      for (let chat of data) {
+        chat._doc.unreadCount = await Message.count({ chat: chat._id, readBy: { $nin: [payload.userId] } });
+      }
+      count = await Chat.countDocuments(condition);
+      result = {
+        data: data,
+        total: count,
+        currPage: parseInt(start / length) + 1,
+      };
+    } catch (err) {
+      result.err = err.message;
+    }
+    return result;
+  },
+
   searchGroup: async function (chatObj, currUser) {
     let result = {};
     let data = null;
@@ -247,6 +321,7 @@ module.exports = {
     }
     return result;
   },
+
   // joinGroup: async function (body, currUser) {
   //   let result = {};
   //   let userId = currUser._id;
@@ -272,6 +347,7 @@ module.exports = {
   //   }
   //   return result;
   // },
+
   joinGroup: async function (body, currUser) {
     let result = {};
     let userId = currUser._id;
@@ -304,6 +380,7 @@ module.exports = {
     }
     return result;
   },
+
   deleteInvitation: async function (body, currUser) {
     let result = {};
     try {
@@ -316,6 +393,7 @@ module.exports = {
     }
     return result;
   },
+
   makeAdmin: async function (body, currUser) {
     let result = {};
     try {
@@ -332,6 +410,7 @@ module.exports = {
     }
     return result;
   },
+
   acceptInvitationLink: async function (body, currUser) {
     let result = {};
     try {
@@ -351,6 +430,7 @@ module.exports = {
     }
     return result;
   },
+
   // leaveGroup: async function (body, currUser) {
   //   let result = {};
   //   try {
@@ -367,6 +447,7 @@ module.exports = {
   //   }
   //   return result;
   // },
+
   leaveGroup: async function (body, currUser) {
     let result = {};
     try {
@@ -387,6 +468,7 @@ module.exports = {
     }
     return result;
   },
+
   // removeFromGroup: async function (body, currUser) {
   //   let result = {};
   //   try {
@@ -403,6 +485,7 @@ module.exports = {
   //   }
   //   return result;
   // },
+
   removeFromGroup: async function (body, currUser) {
     let result = {};
     try {
@@ -423,6 +506,7 @@ module.exports = {
     }
     return result;
   },
+
   listInvitation: async function (chatObj, currUser) {
     let result = {};
     let data = null;
@@ -483,6 +567,7 @@ module.exports = {
     }
     return result;
   },
+
   getDetail: async function (id) {
     let result = {};
     try {
@@ -496,6 +581,7 @@ module.exports = {
     }
     return result;
   },
+
   getDetailMemberList: async function (id) {
     let result = {};
     try {
@@ -509,6 +595,7 @@ module.exports = {
     }
     return result;
   },
+
   sendInvitation: async function (data, currUser) {
     let result = {};
     try {
@@ -544,6 +631,7 @@ module.exports = {
     }
     return result;
   },
+
   userInvitation: async function (data, currUser) {
     let result = {};
     try {
@@ -579,6 +667,7 @@ module.exports = {
     }
     return result;
   },
+
   suggestGroup: async function (chatObj, currUser) {
     let result = {};
     let data = null;
@@ -627,6 +716,7 @@ module.exports = {
     }
     return result;
   },
+
   TotalUnReadCount: async function (currUser) {
     try {
       const result = {
@@ -684,7 +774,6 @@ module.exports = {
     }
   },
 
-
   AddColors: async function () {
     try {
       const array = await Chat.find()
@@ -707,6 +796,21 @@ module.exports = {
         err: err.message
       };
     }
+  },
+
+  getPersonalChatByMembers: async function (memberId, currUser) {
+    let result = {};
+    try {
+      const chat = await Chat.findOne({ users: { $in: [memberId, currUser._id] }, isGroupChat: false });
+      if (chat) {
+        result.data = chat;
+      } else {
+        result.err = "Chat not found";
+      }
+    } catch (err) {
+      result.err = err.message;
+    }
+    return result;
   }
 
 }

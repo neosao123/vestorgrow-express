@@ -7,17 +7,15 @@ module.exports = {
         // let date = new Date()
         comment.createdBy = currUser._id
         try {
+            await CommentReply.findByIdAndUpdate(comment.replyId, { $inc: { likeCount: 1 } });
             result.data = await new ReplyLike(comment).save();
-            await CommentReply.findByIdAndUpdate(
-                comment.replyId,
-                {
-                    $inc: { likeCount: 1 },
-                })
+            result.message = "Comment added sucessfully";
         } catch (err) {
             result.err = err.message;
         }
         return result;
     },
+
     edit: async function (body) {
         let result = {};
         try {
@@ -27,19 +25,22 @@ module.exports = {
                     { $set: body },
                     { new: true }
                 );
-                return { message: "Updated Successfully" };
+                result.message = "Updated Successfully";
+            } else {
+                result.err = "Invalid paramerter or missing paramters";
             }
         } catch (err) {
             result.err = err.message;
         }
         return result;
     },
+
     delete: async function (id, currUser) {
         let result = {};
         try {
             result.data = await ReplyLike.findOneAndDelete({ replyId: id, createdBy: currUser._id });
             await CommentReply.findByIdAndUpdate(result.data.replyId, { $inc: { likeCount: -1 } })
-            return { message: "Record deleted successfully" };
+            result.message = "Record deleted successfully";
         } catch (err) {
             result.err = err.message;
         }
@@ -61,7 +62,6 @@ module.exports = {
             ) {
                 condition["postId"] = commentObj.filter.postId;
             }
-
         }
         try {
             if (start === undefined || length === undefined) {
@@ -76,9 +76,9 @@ module.exports = {
                         _id: "desc",
                     });
             }
-
             count = await ReplyLike.countDocuments(condition);
             result = {
+                message: count > 0 ? "Data found" : "Data not found",
                 data: data,
                 total: count,
                 currPage: parseInt(start / length) + 1,
@@ -93,7 +93,13 @@ module.exports = {
         let result = {};
         try {
             if (id) {
-                result.data = await ReplyLike.findById(id);
+                const replyLike = await ReplyLike.findById(id);
+                if (replyLike) {
+                    result.message = "Data Found";
+                    result.data = replyLike;
+                } else {
+                    result.err = "Data not found";
+                }
             } else {
                 result.err = ["Record not found"];
             }

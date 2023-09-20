@@ -9,4 +9,8 @@ module.exports = {
         let result = await userSteps.updateGroupSuggestion(req.params.id);
         utils.sendResponse(result, req, res);
     },
+    updateStepsForAllUsers: async function (req, res) {
+        let result = await userSteps.updateStepsForAllUsers(req, res);
+        utils.sendResponse(result, req, res);
+    },
 }

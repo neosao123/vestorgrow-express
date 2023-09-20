@@ -160,7 +160,6 @@ module.exports = {
     };
     try {
       data = await Post.find(condition).populate("createdBy").limit(15).skip(0).sort(sortBy);
-
       count = await Post.countDocuments(condition);
       result = {
         data: data,

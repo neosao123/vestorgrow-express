@@ -51,6 +51,10 @@ const post_schema = mongoose.Schema(
         postKeywords: {
             type: [String],
             default: []
+        },
+        mediaType: {
+            type: String,
+            default: ""
         }
     },
     { timestamps: { createdAt: "createdAt" } }

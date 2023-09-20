@@ -14,6 +14,7 @@ const Chat = require("../models/Chat.model");
 const Message = require("../models/Message.model");
 const Notifcation = require("../models/Notification.model");
 const GlobalMessage = require("../models/GlobalMessage.model");
+const UserSteps = require("../models/UserSteps.model");
 const getSearchData = require("./getSearchData");
 const bcrypt = require("bcrypt");
 const utils = require("../utils/utils");
@@ -23,6 +24,7 @@ const moment = require("moment");
 const { mongo } = require("mongoose");
 const ejs = require("ejs");
 const { link } = require("fs");
+const { type } = require("os");
 
 module.exports = {
   add: async function (user, currUser) {
@@ -38,14 +40,13 @@ module.exports = {
       if (checkUserName.length === 0) {
         if (CheckEmail.length === 0) {
           let salt = bcrypt.genSaltSync(saltRounds);
+
           let hash = bcrypt.hashSync(randompwd, salt);
           user.password = hash;
           user.setting = {};
-
-          user.full_name = user.first_name + " " + user.last_name;
-
           result.data = await new User(user).save();
           result.data = await User.findOne({ _id: ObjectId(result.data._id) });
+          await new UserSteps({ userId: result.data._id }).save()
           this.signupActiveLink(user.email);
           // result.token = utils.jwtEncode({ email: result.data.email, userId: result.data._id })
           // result.token = await jwt.sign(
@@ -76,25 +77,31 @@ module.exports = {
         const checkEmail = await User.findOne({ email: email });
         //checking both users email from database to body email
         if (checkEmail) {
-          throw Error("Email already registered");
+          result.err = "Email already registered";
         }
       }
       if (user_name !== usr.user_name) {
         const checkUserName = await User.findOne({ user_name: user_name });
         if (checkUserName) {
-          throw Error("User name already registered");
+          result.err = "User name already registered";
         }
       }
+
+      if (body.first_name && body.first_name !== "") {
+        body.full_name = body.first_name + " " + body.last_name;
+      }
+
+
 
       //compare the old password with new password if body contain password
       if (password && verifyPassword && newPassword) {
         //checking  new password and old password
         if (newPassword !== verifyPassword) {
-          throw Error("Password does't match.");
+          result.err = "Password does't match.";
         }
         const check = await bcrypt.compare(password, usr.password);
         if (!check) {
-          throw Error("Old password does't match.");
+          result.err = "Old password does't match.";
         }
 
         //check the current user id is equal to body user id
@@ -106,18 +113,28 @@ module.exports = {
         let hash = bcrypt.hashSync(newPassword, salt); // create hash
         body.password = hash; // setting hash password to the original password
 
-        body.full_name = body.first_name + " " + body.last_name;
-
         //saving the new data
-        result.data = await User.findByIdAndUpdate(body._id, { $set: body }, { new: true });
-      } else {
-        result.data = await User.findByIdAndUpdate(body._id, { $set: body }, { new: true });
       }
+
+      if (body.investmentInterests) {
+        if ((typeof body.investmentInterests === "string") && body.investmentInterests === "") {
+          console.log("chitfund")
+          body.investmentInterests = [];
+        } else if (body.investmentInterests.length === 0) {
+          console.log("bosedk")
+          body.investmentInterests = [];
+        }
+      } else {
+        body.investmentInterests = [];
+      }
+
+      result.data = await User.findByIdAndUpdate(body._id, { $set: body }, { new: true });
+
       return {
         result: result.data,
         message: "Updated Successfully",
       };
-      // return { message: "Updated Successfully" };
+
     } catch (err) {
       result.err = err.message;
     }
@@ -148,7 +165,7 @@ module.exports = {
     return result;
   },
 
-  ddProfile: async function (body) {
+  addProfile: async function (body) {
     let result = { data: null };
     try {
       const usr = await User.findOne({ active_token: body.active_token });
@@ -165,7 +182,7 @@ module.exports = {
         };
         // return { message: "Updated Successfully" };
       } else {
-        throw Error("Token not found");
+        result.err = "Token not found";
       }
     } catch (err) {
       result.err = err.message;
@@ -184,7 +201,7 @@ module.exports = {
           message: "Updated Successfully",
         };
       } else {
-        throw Error("User not found");
+        result.err = "User not found";
       }
     } catch (err) {
       result.err = err.message;
@@ -203,7 +220,7 @@ module.exports = {
           message: "Updated Successfully",
         };
       } else {
-        throw Error("User not found");
+        result.err = "User not found";
       }
     } catch (err) {
       result.err = err.message;
@@ -256,7 +273,7 @@ module.exports = {
           result.data._doc.groupSuggestion = res.groupSuggestion;
         }
       } else {
-        throw Error("User not found");
+        result.err = "User not found";
       }
     } catch (err) {
       result.err = err.message;
@@ -304,7 +321,7 @@ module.exports = {
         toBeDeleted.push(result.data.cover_img);
         return { toBeDeleted, message: "Record deleted successfully" };
       } else {
-        throw Error("Record not found");
+        result.err = "Record not found";
       }
     } catch (err) {
       result.err = err.message;
@@ -374,7 +391,7 @@ module.exports = {
       let user = await User.findOne({ $or: [{ email: email }, { user_name: email }] }).select("+password");
 
       if (user && user.is_active === false) {
-        throw Error("Account is inactive.");
+        result.err = "Account is inactive.";
       } else {
         let check = false;
         if (user) {
@@ -442,13 +459,12 @@ module.exports = {
             await User.findByIdAndUpdate({ _id: user._id }, { loginAt: new Date() });
           }
         } else {
-          throw Error("Email or password is incorrect.");
+          result.err = "Email or password is incorrect.";
         }
       }
     } catch (err) {
-      return (result.err = err.message);
+      result.err = err.message;
     }
-    console.log("RESULT:", result)
     return result;
   },
 
@@ -460,7 +476,7 @@ module.exports = {
       let user = await User.findOne({ $or: [{ email: email }, { user_name: email }] }).select("+password");
 
       if (user && user.is_active === false) {
-        throw Error("Account is inactive.");
+        result.err = "Account is inactive.";
       } else {
         let check = false;
         if (user) {
@@ -492,14 +508,14 @@ module.exports = {
             await User.findByIdAndUpdate({ _id: user._id }, { loginAt: new Date() });
             await UserOtp.deleteMany({ email: email });
           } else {
-            throw Error("Email or password is incorrect.");
+            result.err = "Email or password is incorrect.";
           }
         } else {
-          throw Error("OTP is incorrect.");
+          result.err = "OTP is incorrect.";
         }
       }
     } catch (err) {
-      return (result.err = err.message);
+      result.err = err.message;
     }
     return result;
   },
@@ -511,13 +527,11 @@ module.exports = {
       if (session) {
         session.updatedAt = new Date();
         session.isLogin = false;
-        await session.save();
-        await User.findByIdAndUpdate(body._id, { $set: { is_online: false } });
-      } else {
-        throw Error("Email Id does not exists");
-      }
+        await session.save(); 
+      } 
+      result.data = await User.findByIdAndUpdate(body._id, { $set: { is_online: false } });
     } catch (err) {
-      return (result.err = err.message);
+      result.err = err.message;
     }
     return result;
   },
@@ -565,7 +579,7 @@ module.exports = {
           return result;
 
         } else {
-          throw Error("Email Id does not exists");
+          result.err = "Email Id does not exists";
         }
       }
     } catch (err) {
@@ -623,13 +637,13 @@ module.exports = {
               }
               return result;
             } else {
-              throw Error("your password does't match");
+              result.err = "your password does't match";
             }
           } else {
-            throw Error("your otp does't match");
+            result.err = "your otp does't match";
           }
         } else {
-          throw Error("Email Id does't exist");
+          result.err = "Email Id does't exist";
         }
       }
     } catch (err) {
@@ -683,9 +697,9 @@ module.exports = {
 
         return result;
       } else if (result.data === null) {
-        throw Error("Email Id does not exists");
+        result.err = "Email Id does not exists";
       } else {
-        throw Error("Validation failed");
+        result.err = "Validation failed";
       }
     } catch (err) {
       result.err = err.message;
@@ -738,9 +752,9 @@ module.exports = {
 
         return result;
       } else if (result.data === null) {
-        throw Error("Email Id does not exists");
+        result.err = "Email Id does not exists";
       } else {
-        throw Error("Validation failed");
+        result.err = "Validation failed";
       }
     } catch (err) {
       result.err = err.message;
@@ -1007,6 +1021,7 @@ module.exports = {
     const userId = currUser._id;
     let result = {};
 
+
     let following = await UserFollower.find({ userId: userId }).select({ followingId: 1 });
 
     let followingArr = following.map((i) => {
@@ -1020,7 +1035,6 @@ module.exports = {
         return fUser.followingId + "";
       }
     });
-
     if (tab !== undefined) {
       let condition = {
         "_id": {
@@ -1045,7 +1059,6 @@ module.exports = {
             _id: { $ne: userId }
           };
         }
-
         const users = await User.find(condition).sort({ followers: -1 }).limit(60);
 
         if (users.length > 0) {
@@ -1059,12 +1072,24 @@ module.exports = {
               user._doc.isFollowing = "notfollowing";
             }
           }
+
         }
+
+        let Users = [];
+        if (users.length > 0) {
+          Users = users.filter((el) => {
+            if (el._doc.isFollowing === "notfollowing") {
+              return el;
+            }
+          })
+        }
+
+
 
         result = {
           searchText: searchText,
           tab: tab,
-          users: users
+          users: Users
         };
       } else if (tab === "you_may_know") {
         // friends of friends
@@ -1121,10 +1146,19 @@ module.exports = {
           }
         }
 
+        let Users = [];
+        if (users.length > 0) {
+          Users = users.filter((el) => {
+            if (el.isFollowing !== "following" && el.isFollowing !== "requested") {
+              return el;
+            }
+          })
+        }
+
         result = {
           searchText: searchText,
           tab: tab,
-          users: users
+          users: Users
         };
       } else {
         //newly joined users
@@ -1155,14 +1189,46 @@ module.exports = {
           }
         }
 
+
+        let Users = [];
+        if (users.length > 0) {
+          Users = users.filter((el) => {
+            if (el._doc.isFollowing === "notfollowing") {
+              return el;
+            }
+          })
+        }
+
         result = {
           searchText: searchText,
           tab: tab,
-          users: users
+          users: Users
         };
       }
     } else {
       result.err = "Tabs is not provided";
+    }
+    return result;
+  },
+
+  addFullNamesToExistingUsers: async function () {
+    let result = {};
+    try {
+      const users = await User.find({}).select({ _id: 1, first_name: 1, last_name: 1 });
+      if (users) {
+        for (let user of users) {
+          const update = {
+            $set: {
+              full_name: user.first_name + " " + user.last_name
+            }
+          }
+          await User.findByIdAndUpdate(user._id, update);
+        }
+        result.message = "Data found";
+        result.data = await User.find({});
+      }
+    } catch (error) {
+      result.err = error.message;
     }
     return result;
   }

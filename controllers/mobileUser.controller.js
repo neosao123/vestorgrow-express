@@ -15,7 +15,7 @@ module.exports = {
       res.status(status).send(result);
     }
   },
-  socialLogin: async function(req, res)  {
+  socialLogin: async function (req, res) {
 
 
     let ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
@@ -46,7 +46,7 @@ module.exports = {
     delete result.status;
     res.status(status).send(result);
   },
-  login: async function(req, res)  {
+  login: async function (req, res) {
 
     let ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
     let userAgent = req.useragent;
@@ -181,7 +181,7 @@ module.exports = {
     } else {
       filename = "";
     }
-    const final_url = process.env.BASE_PATH + process.env.IMAGE_DESTINATION + filename;
+    const final_url = process.env.ENDPOINT + process.env.IMAGE_DESTINATION + filename;
     const result = await MobileUserService.updateProfileImg(
       req.currUser,
       final_url

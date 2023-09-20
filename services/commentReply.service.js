@@ -5,10 +5,12 @@ const Post = require("../models/Post.model");
 module.exports = {
     save: async function (comment) {
         let result = {};
-        let date = new Date();
-        let mentUsers = comment.mentionedUsers;
-        delete comment.mentionedUsers;
         try {
+
+            let date = new Date();
+            let mentUsers = comment.mentionedUsers ?? [];
+            delete comment.mentionedUsers;
+
             result.data = await new CommentReply(comment).save();
 
             if (mentUsers.length > 0) {
@@ -25,12 +27,12 @@ module.exports = {
                     }
                 });
             }
-
         } catch (err) {
             result.err = err.message;
         }
         return result;
     },
+
     edit: async function (body) {
         let result = {};
         try {
@@ -40,18 +42,20 @@ module.exports = {
                     { $set: body },
                     { new: true }
                 );
-                return { message: "Updated Successfully" };
+                result.message = "Updated Successfully";
+            } else {
+                result.err = "Invalid parameters or missing";
             }
         } catch (err) {
             result.err = err.message;
         }
         return result;
     },
+
     delete: async function (id) {
         let result = {};
         try {
             result.data = await CommentReply.findByIdAndDelete(id);
-            // await Post.findByIdAndUpdate(result.data.postId, { $inc: { commentCount: -1 } })
             return { message: "Record deleted successfully" };
         } catch (err) {
             result.err = err.message;
@@ -74,7 +78,6 @@ module.exports = {
             ) {
                 condition["postId"] = commentObj.filter.postId;
             }
-
         }
         try {
             if (start === undefined || length === undefined) {
@@ -89,7 +92,6 @@ module.exports = {
                         _id: "desc",
                     });
             }
-
             count = await CommentReply.countDocuments(condition);
             result = {
                 data: data,
@@ -108,11 +110,11 @@ module.exports = {
             if (id) {
                 result.data = await CommentReply.findById(id);
             } else {
-                result.err = ["Record not found"];
+                result.err = "Record not found";
             }
         } catch (err) {
             result.err = err.message;
         }
         return result;
-    },
+    }
 };

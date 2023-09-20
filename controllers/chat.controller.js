@@ -1,3 +1,4 @@
+const { chat } = require("googleapis/build/src/apis/chat");
 const chatServ = require("../services/Chat.service");
 const utils = require("../utils/utils");
 const fs = require("fs");
@@ -52,14 +53,17 @@ module.exports = {
     let result = await chatServ.edit(req.body);
     utils.sendResponse(result, req, res);
   },
+
   joinGroup: async function (req, res) {
     let result = await chatServ.joinGroup(req.body, req.currUser);
     utils.sendResponse(result, req, res);
   },
+
   leaveGroup: async function (req, res) {
     let result = await chatServ.leaveGroup(req.body, req.currUser);
     utils.sendResponse(result, req, res);
   },
+
   removeFromGroup: async function (req, res) {
     let result = await chatServ.removeFromGroup(req.body, req.currUser);
     utils.sendResponse(result, req, res);
@@ -73,6 +77,7 @@ module.exports = {
     }
     utils.sendResponse(result, req, res);
   },
+
   deleteChat: async function (req, res) {
     let result = await chatServ.deleteChat(req.body, req.currUser);
     utils.sendResponse(result, req, res);
@@ -82,6 +87,12 @@ module.exports = {
     let result = await chatServ.listAll(req.body, req.currUser);
     utils.sendResponse(result, req, res);
   },
+
+  profileChatGroupList: async function (req, res) {
+    let result = await chatServ.profileChatGroupList(req.body, req.currUser);
+    utils.sendResponse(result, req, res);
+  },
+
   searchGroup: async function (req, res) {
     let result = await chatServ.searchGroup(req.body, req.currUser);
     utils.sendResponse(result, req, res);
@@ -91,26 +102,32 @@ module.exports = {
     let result = await chatServ.getDetail(req.params.id);
     utils.sendResponse(result, req, res);
   },
+
   getDetailMemberList: async function (req, res) {
     let result = await chatServ.getDetailMemberList(req.params.id);
     utils.sendResponse(result, req, res);
   },
+
   listInvitation: async function (req, res) {
     let result = await chatServ.listInvitation(req.body, req.currUser);
     utils.sendResponse(result, req, res);
   },
+
   sendInvitation: async function (req, res) {
     let result = await chatServ.sendInvitation(req.body, req.currUser);
     utils.sendResponse(result, req, res);
   },
+
   userInvitation: async function (req, res) {
     let result = await chatServ.userInvitation(req.body, req.currUser);
     utils.sendResponse(result, req, res);
   },
+
   deleteInvitation: async function (req, res) {
     let result = await chatServ.deleteInvitation(req.body, req.currUser);
     utils.sendResponse(result, req, res);
   },
+
   makeAdmin: async function (req, res) {
     let result = await chatServ.makeAdmin(req.body, req.currUser);
     utils.sendResponse(result, req, res);
@@ -123,13 +140,19 @@ module.exports = {
     let result = await chatServ.suggestGroup(req.body, req.currUser);
     utils.sendResponse(result, req, res);
   },
+
   TotalUnReadCount: async function (req, res) {
     let result = await chatServ.TotalUnReadCount(req.currUser)
     utils.sendResponse(result, req, res)
   },
+
   AddColors: async function (req, res) {
     let result = await chatServ.AddColors()
     utils.sendResponse(result, req, res)
-  }
+  },
 
+  getPersonalChatByMembers: async function (req, res) {
+    let result = await chatServ.getPersonalChatByMembers(req.body.memberId, req.currUser);
+    utils.sendResponse(result, req, res);
+  }
 };

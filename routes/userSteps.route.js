@@ -9,4 +9,8 @@ router
     .route("/group/:id")
     .post(UserSteps.updateGroupSuggestion)
 
+router
+    .route("/update/steps/all/users")
+    .get(UserSteps.updateStepsForAllUsers)
+
 module.exports = router

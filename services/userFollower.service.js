@@ -1,6 +1,7 @@
 const UserFollower = require("../models/UserFollower.model");
 const UserFollowerTemp = require("../models/UserFollowerTemp.model");
 const User = require("../models/User.model");
+const Chat = require("../models/Chat.model");
 
 module.exports = {
   save: async function (data, currUser) {
@@ -266,7 +267,7 @@ module.exports = {
       if (id) {
         result.data = await UserFollower.findById(id);
       } else {
-        throw Error("Record not found");
+        result.err = "Record not found";
       }
     } catch (err) {
       result.err = err.message;
@@ -554,37 +555,58 @@ module.exports = {
     try {
       if (start === undefined || length === undefined) {
         data = await UserFollower.find(condition)
-          .populate("userId", "user_name first_name last_name email profile_img")
-          .populate("followingId", "user_name first_name last_name email profile_img")
+          .populate("userId", "user_name first_name last_name full_name email profile_img")
+          .populate("followingId", "user_name first_name last_name full_name email profile_img")
           .sort({
             _id: "desc",
           });
       } else {
         data = await UserFollower.find(condition)
-          .populate("userId", "user_name first_name last_name email profile_img title")
-          .populate("followingId", "user_name first_name last_name email profile_img title")
+          .populate("userId", "user_name first_name last_name email full_name profile_img title")
+          .populate("followingId", "user_name first_name last_name email full_name profile_img title")
           .limit(parseInt(length))
           .skip(start)
           .sort({
             _id: "desc",
           });
       }
+
+      const loginUserChats = await Chat.find({ users: { $in: [currUser._id] }, isGroupChat: false });
+
+      const chatsArray = loginUserChats.map(chat => { return { chatId: chat._id, users: chat.users } });
       // console.log(data);
       data.forEach((item) => {
         if (item.userId && item.followingId) {
           if (item.userId._id + "" == currUser._id + "") {
             if (friendsList.findIndex((v) => v.userId._id + "" == item.followingId._id + "") == -1) {
-              friendsList.push({ userId: item.followingId });
+              let userData = item.followingId;
+              let hasChat = chatsArray.find(chat => {
+                const usersInChat = chat.users;
+                if (usersInChat.includes(item.followingId._id + "")) {
+                  return chat;
+                }
+              });
+              userData._doc.chatId = hasChat ? hasChat.chatId : "";
+              friendsList.push({ userId: userData });
             }
           } else {
             if (friendsList.findIndex((v) => v.userId._id + "" == item.userId._id + "") == -1) {
-              friendsList.push({ userId: item.userId });
+              let userData = item.userId;
+              let hasChat = chatsArray.find(chat => {
+                const usersInChat = chat.users;
+                if (usersInChat.includes(item.followingId._id + "")) {
+                  return chat;
+                }
+              });
+              userData._doc.chatId = hasChat ? hasChat.chatId : "";
+              friendsList.push({ userId: userData });
             }
           }
         }
       });
       count = await UserFollower.countDocuments(condition);
       result = {
+        chatsArray,
         data: friendsList,
         total: count,
         currPage: parseInt(start / length) + 1,

@@ -4,11 +4,11 @@ const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 require("dotenv").config();
 const { Server } = require("socket.io");
-
 var path = require('path');
 const cors = require("cors");
-const port = process.env.PORT || 3000;
+
 var useragent = require("express-useragent");
+
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -33,14 +33,21 @@ app.use(bodyParser.json({ limit: "200mb" }));
 //   })
 // );
 app.use(useragent.express());
+
 app.use(cors({
   origin: "*"
 }));
+
+// folder access for url
 app.use("/uploads/Avatars", express.static("uploads"));
 app.use("/uploads", express.static("uploads"));
 app.use("/assets", express.static("assets"));
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
+
+// import models
+const Message = require("./models/Message.model");
+const UserBlockedModel = require("./models/UserBlocked.model")
 
 // import routes
 const userRoute = require("./routes/user.route");
@@ -71,11 +78,10 @@ const ReportPostRoute = require("./routes/reportPost.route");
 const TestimonialRoute = require("./routes/testimonial.route");
 const GoogleSignUpRoute = require("./routes/googleSignUp.route");
 const PaymentRoute = require("./routes/payment.route");
-const Message = require("./models/Message.model");
-const UserBlockedModel = require("./models/UserBlocked.model")
 const MobileUserRoute = require("./routes/mobileUser.route");
 const AppleUserRoute = require("./routes/appleUser.route");
 const CountryRoute = require("./routes/country.route");
+const stepsRoute = require("./routes/userSteps.route");
 
 // New Routes
 app.use("/api/v1/auth/google/callback", GoogleSignUpRoute);
@@ -106,8 +112,7 @@ app.use("/message", MessageRoute);
 app.use("/globalmessage", GlobalMessageRoute);
 app.use("/report", ReportPostRoute);
 app.use("/payment", PaymentRoute);
-
-// sajalsahu-new-routes
+app.use("/steps", stepsRoute);
 app.use("/", MobileUserRoute, CountryRoute, AppleUserRoute);
 
 let server = http.createServer(app);
@@ -202,6 +207,8 @@ app.use(function (err, req, res, next) {
     res.status(404).json(err);
   }
 });
+
+const port = process.env.PORT || 3000;
 
 server.listen(port, () => {
   console.log(`Server is starting at http://localhost:${port}`);
