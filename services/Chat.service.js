@@ -164,16 +164,13 @@ module.exports = {
   profileChatGroupList: async function (payload) {
     let result = {};
     try {
-
-      console.log(payload);
-
       let data = null;
       let count;
       let condition = {};
       let userPath = {
         path: "users",
         match: {},
-        select: { first_name: 1, last_name: 1, profile_img: 1, role: 1, title: 1, user_name: 1 },
+        select: { first_name: 1, last_name: 1, full_name: 1, profile_img: 1, role: 1, title: 1, user_name: 1 },
       };
       const { start, length } = payload;
       condition["users"] = { $in: [payload.userId] };

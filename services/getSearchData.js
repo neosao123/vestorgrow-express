@@ -383,6 +383,12 @@ module.exports = {
               $options: "i",
             },
           },
+          {
+            full_name: {
+              $regex: "^" + searchObj.searchText + ".*",
+              $options: "i",
+            },
+          },
         ],
       };
     }

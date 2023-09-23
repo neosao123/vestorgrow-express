@@ -1,6 +1,8 @@
 const PostLike = require("../models/PostLike.model");
 const Post = require("../models/Post.model");
 const Notifcation = require("../models/Notification.model");
+const UserFollower = require("../models/UserFollower.model");
+const UserBlocked = require("../models/UserBlocked.model");
 
 module.exports = {
   save: async function (like, currUser) {
@@ -57,56 +59,68 @@ module.exports = {
 
   listAll: async function (likeObj, currUser) {
     let result = {};
-    let data = null;
-    let count;
-    let likeCount;
-    let loveCount;
-    let insightCount;
-    let condition = {};
-    let createdBy = { path: "createdBy" };
-    const { start, length } = likeObj;
-    if (likeObj.filter !== undefined) {
-      if (
-        likeObj.filter.searchText !== undefined &&
-        likeObj.filter.searchText !== null &&
-        likeObj.filter.searchText !== ""
-      ) {
-        // createdBy.match = {
-        //   $or: [
-        //     {
-        //       user_name: {
-        //         $regex: ".*" + likeObj.filter.searchText + ".*",
-        //         $options: "i",
-        //       },
-        //     },
-        //     {
-        //       email: {
-        //         $regex: ".*" + likeObj.filter.searchText + ".*",
-        //         $options: "i",
-        //       },
-        //     },
-        //   ],
-        // };
-        const pattern = `^${likeObj.filter.searchText}`;
-        createdBy.match = {
-          $or: [
-            {
-              user_name: {
-                $regex: pattern,
-                $options: "i",
-              },
-            }
-          ],
-        };
-      }
-      if (likeObj.filter.postId !== undefined && likeObj.filter.postId !== null && likeObj.filter.postId !== "") {
-        condition["postId"] = likeObj.filter.postId;
-      }
-      if (likeObj.filter.type !== undefined && likeObj.filter.type !== null && likeObj.filter.type !== "") {
-        condition["type"] = likeObj.filter.type;
-      }
-    }
     try {
+      let data = null;
+      let count;
+      let likeCount;
+      let loveCount;
+      let insightCount;
+      let condition = {};
+      let createdBy = { path: "createdBy" };
+
+      let followingListData = await UserFollower.find({ userId: currUser._id }, { followingId: 1, _id: 0 });
+      let blockedUserList = await UserBlocked.find({ userId: currUser._id });
+
+      let blockedUserArr = blockedUserList.map((i) => i.blockedId + "");
+      let followingArr = followingListData.map((i) => {
+        if (!blockedUserArr.includes(i.followingId + "")) {
+          return i.followingId + "";
+        }
+      });
+
+      const { start, length } = likeObj;
+      if (likeObj.filter !== undefined) {
+        if (
+          likeObj.filter.searchText !== undefined &&
+          likeObj.filter.searchText !== null &&
+          likeObj.filter.searchText !== ""
+        ) {
+          // createdBy.match = {
+          //   $or: [
+          //     {
+          //       user_name: {
+          //         $regex: ".*" + likeObj.filter.searchText + ".*",
+          //         $options: "i",
+          //       },
+          //     },
+          //     {
+          //       email: {
+          //         $regex: ".*" + likeObj.filter.searchText + ".*",
+          //         $options: "i",
+          //       },
+          //     },
+          //   ],
+          // };
+          const pattern = `^${likeObj.filter.searchText}`;
+          createdBy.match = {
+            $or: [
+              {
+                user_name: {
+                  $regex: pattern,
+                  $options: "i",
+                },
+              }
+            ],
+          };
+        }
+        if (likeObj.filter.postId !== undefined && likeObj.filter.postId !== null && likeObj.filter.postId !== "") {
+          condition["postId"] = likeObj.filter.postId;
+        }
+        if (likeObj.filter.type !== undefined && likeObj.filter.type !== null && likeObj.filter.type !== "") {
+          condition["type"] = likeObj.filter.type;
+        }
+      }
+
       if (start === undefined || length === undefined) {
         data = await PostLike.find(condition)
           .populate(createdBy)
@@ -131,6 +145,18 @@ module.exports = {
         loveCount = await PostLike.countDocuments({ "type": "love", postId: likeObj.filter.postId });
         insightCount = await PostLike.countDocuments({ "type": "insight", postId: likeObj.filter.postId });
       }
+
+      if (data.length > 0) {
+        for (let usr of data) {
+          const nid = usr.createdBy._id + "";
+          if (followingArr.includes(nid)) {
+            usr._doc.isFollowing = true;
+          } else {
+            usr._doc.isFollowing = false;
+          }
+        }
+      }
+
       result = {
         data: data,
         total: count,
@@ -138,6 +164,7 @@ module.exports = {
         likeCount: likeCount,
         loveCount: loveCount,
         insightCount: insightCount,
+        //followingArr
       };
     } catch (err) {
       result.err = err.message;

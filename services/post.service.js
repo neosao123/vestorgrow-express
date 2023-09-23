@@ -127,7 +127,7 @@ module.exports = {
         return i.followingId + "";
       }
     });
-    console.log("BLOCKEDUSERARRAY:",blockedUserArr)
+    console.log("BLOCKEDUSERARRAY:", blockedUserArr)
     let sharedPostUserArr = sharedPostUserList.map((i) => {
       if (!blockedUserArr.includes(i.sharedBy + "")) {
         return i.sharedBy;
@@ -314,7 +314,7 @@ module.exports = {
     return result;
   },
 
-  sharePost: async function (body, currUser) {
+  sharePost_Old: async function (body, currUser) {
     let result = {};
     let notificationObj = {
       postId: body._id,
@@ -337,6 +337,55 @@ module.exports = {
       });
       if (notificationObj.createdBy + "" !== notificationObj.createdFor + "") {
         await new Notifcation(notificationObj).save();
+      }
+    } catch (err) {
+      result.err = err.message;
+    }
+    return result;
+  },
+
+  sharePost: async function (body, currUser) {
+    let result = {};
+    try {
+      const currUserId = currUser._id;
+      const postData = await Post.findOne({ _id: body.postId });
+      if (postData) {
+        let sharedPost = postData.toObject();        
+        sharedPost.createdBy = currUserId;
+        sharedPost.parentPostId = body.postId;
+        sharedPost.originalPostId = body.postId;
+        delete sharedPost._id;
+        delete sharedPost.commentCount;
+        delete sharedPost.shareCount;
+        delete sharedPost.likeCount;
+        delete sharedPost.createdAt;
+        delete sharedPost.updatedAt;
+        
+        const post = new Post(sharedPost);
+        
+        const savedPost = await post.save();
+
+        await Post.findByIdAndUpdate(body.postId, {
+          $inc: { shareCount: 1 },
+        });
+
+        let notificationObj = {
+          postId: body.postId,
+          title: "shared your post",
+          type: "share",
+          createdBy: currUserId,
+          createdFor: postData.createdBy,
+        };
+
+        if (notificationObj.createdBy + "" !== notificationObj.createdFor + "") {
+          await new Notifcation(notificationObj).save();
+        }
+
+        result.data = savedPost;
+        result.message = "Post shared successfully";
+
+      } else {
+        result.err = "Post not found or may have been removed";
       }
     } catch (err) {
       result.err = err.message;
