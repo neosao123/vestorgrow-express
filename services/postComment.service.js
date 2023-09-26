@@ -23,6 +23,7 @@ module.exports = {
       delete comment.mentionedUsers;
 
       result.data = await new PostComment(comment).save();
+
       let post = await Post.findByIdAndUpdate(comment.postId, {
         $inc: { commentCount: 1 },
         $set: { lastActivityDate: date },
@@ -50,6 +51,9 @@ module.exports = {
           }
         });
       }
+      
+      result.postCommentData = await PostComment.findById(result.data._id).populate("createdBy");
+
     } catch (err) {
       result.err = err.message;
     }

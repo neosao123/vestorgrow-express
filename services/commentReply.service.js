@@ -27,6 +27,9 @@ module.exports = {
                     }
                 });
             }
+            
+            result.commentReplyData = await CommentReply.findById(result.data._id).populate("createdBy");
+            
         } catch (err) {
             result.err = err.message;
         }

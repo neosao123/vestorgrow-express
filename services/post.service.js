@@ -651,7 +651,7 @@ module.exports = {
 
         if (likeArr.includes(post._id + "")) {
           post._doc.isLiked = true;
-          var filteredReaction = postsLikedByLoginUser.filter(postLike => postLike.postId.toString() === post._id.toString());
+          var filteredReaction = postsLikedByLoginUser.filter(postLike => postLike.postId + "" === post._id +"");
           post._doc.reaction = filteredReaction.length > 0 ? filteredReaction[0] : {};
         }
 

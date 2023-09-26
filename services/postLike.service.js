@@ -3,6 +3,7 @@ const Post = require("../models/Post.model");
 const Notifcation = require("../models/Notification.model");
 const UserFollower = require("../models/UserFollower.model");
 const UserBlocked = require("../models/UserBlocked.model");
+const UserFollowerTemp = require("../models/UserFollowerTemp.model");
 
 module.exports = {
   save: async function (like, currUser) {
@@ -17,14 +18,37 @@ module.exports = {
     try {
       let availableData = await PostLike.find({ postId: like.postId, type: like.type, createdBy: like.createdBy });
       if (availableData < 1) {
-        result.data = await new PostLike(like).save();
+        const postLike = await new PostLike(like).save();
+        const reactionsCount = await PostLike.countDocuments({ postId: like.postId });
         let post = await Post.findByIdAndUpdate(like.postId, {
-          $inc: { likeCount: 1 },
-        });
+          $set: { likeCount: reactionsCount },
+        }, { new: true });
         notificationObj.createdFor = post.createdBy;
         if (notificationObj.createdBy + "" !== notificationObj.createdFor + "") {
           await new Notifcation(notificationObj).save();
         }
+
+        const postData = await Post.findById(like.postId).populate("createdBy");
+        postData._doc.reaction = {
+          _id: postLike._id,
+          postId: postLike.postId,
+          type: postLike.type
+        };
+        postData._doc.postReactions = await PostLike.distinct('type', { postId: { $in: [like.postId] } });       
+
+        if (like.type === "insight") {
+          result.message = `Post marked as insightful successfully`;
+        } else if (like.type = "love") {
+          result.message = `Post marked as loved successfully`;
+        } else {
+          result.message = `Post liked successfully`;
+        }
+        
+        result.data = postLike;       
+        result.postLikeData = postData;
+
+      } else {
+        result.err = "You have already reacted to the post";
       }
     } catch (err) {
       result.err = err.message;
@@ -48,9 +72,20 @@ module.exports = {
   delete: async function (id, currUser) {
     let result = {};
     try {
-      result.data = await PostLike.findOneAndDelete({ postId: id, createdBy: currUser._id });
-      await Post.findByIdAndUpdate(result.data.postId, { $inc: { likeCount: -1 } });
-      return { message: "Record deleted successfully" };
+      const postLike = await PostLike.findOneAndDelete({ postId: id, createdBy: currUser._id });
+      const reactionsCount = await PostLike.countDocuments({ postId: id });
+      await Post.findByIdAndUpdate(result.data.postId, { $set: { likeCount: reactionsCount } });
+
+      const postData = await Post.findById(like.postId).populate("createdBy");
+      postData._doc.reaction = {
+        _id: postLike._id,
+        postId: postLike.postId,
+        type: postLike.type
+      };
+      postData._doc.postReactions = await PostLike.distinct('type', { postId: { $in: [like.postId] } });  
+      result.data = postLike;
+      result.postLikeData = postData;
+      result.message = "Reaction removed successfully";
     } catch (err) {
       result.err = err.message;
     }
@@ -70,6 +105,9 @@ module.exports = {
 
       let followingListData = await UserFollower.find({ userId: currUser._id }, { followingId: 1, _id: 0 });
       let blockedUserList = await UserBlocked.find({ userId: currUser._id });
+
+      let requestedListData = await UserFollowerTemp.find({ userId: currUser._id }, { followingId: 1, _id: 0 });
+      let requestedArr = requestedListData.map((r) => { return r.followingId + "" });
 
       let blockedUserArr = blockedUserList.map((i) => i.blockedId + "");
       let followingArr = followingListData.map((i) => {
@@ -149,11 +187,15 @@ module.exports = {
       if (data.length > 0) {
         for (let usr of data) {
           const nid = usr.createdBy._id + "";
+          var isFollowing = 0;
           if (followingArr.includes(nid)) {
-            usr._doc.isFollowing = true;
+            isFollowing = 1;
+          } else if (requestedArr.includes(nid)) {
+            isFollowing = 2;
           } else {
-            usr._doc.isFollowing = false;
+            isFollowing = 0;
           }
+          usr._doc.isFollowing = isFollowing;
         }
       }
 
@@ -163,8 +205,7 @@ module.exports = {
         currPage: parseInt(start / length) + 1,
         likeCount: likeCount,
         loveCount: loveCount,
-        insightCount: insightCount,
-        //followingArr
+        insightCount: insightCount
       };
     } catch (err) {
       result.err = err.message;
