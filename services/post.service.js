@@ -119,8 +119,6 @@ module.exports = {
     let followingListData = await UserFollower.find({ userId: usrId }, { followingId: 1, _id: 0 });
     let sharedPostUserList = await PostShare.find({ sharedTo: usrId }, { sharedBy: 1, _id: 0 });
 
-
-
     let blockedUserArr = blockedUserList.map((i) => i.blockedId + "");
     let followingArr = followingListData.map((i) => {
       if (!blockedUserArr.includes(i.followingId + "")) {
@@ -350,7 +348,7 @@ module.exports = {
       const currUserId = currUser._id;
       const postData = await Post.findOne({ _id: body.postId });
       if (postData) {
-        let sharedPost = postData.toObject();        
+        let sharedPost = postData.toObject();
         sharedPost.createdBy = currUserId;
         sharedPost.parentPostId = body.postId;
         sharedPost.originalPostId = body.postId;
@@ -360,9 +358,9 @@ module.exports = {
         delete sharedPost.likeCount;
         delete sharedPost.createdAt;
         delete sharedPost.updatedAt;
-        
+
         const post = new Post(sharedPost);
-        
+
         const savedPost = await post.save();
 
         await Post.findByIdAndUpdate(body.postId, {
@@ -594,6 +592,7 @@ module.exports = {
               _id: 1,
               profile_img: 1,
               user_name: 1,
+              full_name: 1,
               role: 1
             }
           }
@@ -651,7 +650,7 @@ module.exports = {
 
         if (likeArr.includes(post._id + "")) {
           post._doc.isLiked = true;
-          var filteredReaction = postsLikedByLoginUser.filter(postLike => postLike.postId + "" === post._id +"");
+          var filteredReaction = postsLikedByLoginUser.filter(postLike => postLike.postId + "" === post._id + "");
           post._doc.reaction = filteredReaction.length > 0 ? filteredReaction[0] : {};
         }
 

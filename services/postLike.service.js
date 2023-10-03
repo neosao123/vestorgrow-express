@@ -28,13 +28,29 @@ module.exports = {
           await new Notifcation(notificationObj).save();
         }
 
-        const postData = await Post.findById(like.postId).populate("createdBy");
+        const postData = await Post.findById(like.postId).populate("createdBy").populate({
+          path: "originalPostId",
+          select: {
+            _id: 1
+          },
+          populate: {
+            path: "createdBy",
+            model: "User",
+            select: {
+              _id: 1,
+              profile_img: 1,
+              user_name: 1,
+              full_name: 1,
+              role: 1
+            }
+          }
+        });
         postData._doc.reaction = {
           _id: postLike._id,
           postId: postLike.postId,
           type: postLike.type
         };
-        postData._doc.postReactions = await PostLike.distinct('type', { postId: { $in: [like.postId] } });       
+        postData._doc.postReactions = await PostLike.distinct('type', { postId: { $in: [like.postId] } });
 
         if (like.type === "insight") {
           result.message = `Post marked as insightful successfully`;
@@ -43,8 +59,8 @@ module.exports = {
         } else {
           result.message = `Post liked successfully`;
         }
-        
-        result.data = postLike;       
+
+        result.data = postLike;
         result.postLikeData = postData;
 
       } else {
@@ -74,15 +90,27 @@ module.exports = {
     try {
       const postLike = await PostLike.findOneAndDelete({ postId: id, createdBy: currUser._id });
       const reactionsCount = await PostLike.countDocuments({ postId: id });
-      await Post.findByIdAndUpdate(result.data.postId, { $set: { likeCount: reactionsCount } });
+      await Post.findByIdAndUpdate(id, { $set: { likeCount: reactionsCount } });
 
-      const postData = await Post.findById(like.postId).populate("createdBy");
-      postData._doc.reaction = {
-        _id: postLike._id,
-        postId: postLike.postId,
-        type: postLike.type
-      };
-      postData._doc.postReactions = await PostLike.distinct('type', { postId: { $in: [like.postId] } });  
+      const postData = await Post.findById(id).populate("createdBy").populate({
+        path: "originalPostId",
+        select: {
+          _id: 1
+        },
+        populate: {
+          path: "createdBy",
+          model: "User",
+          select: {
+            _id: 1,
+            profile_img: 1,
+            user_name: 1,
+            full_name: 1,
+            role: 1
+          }
+        }
+      });
+      postData._doc.reaction = {};
+      postData._doc.postReactions = await PostLike.distinct('type', { postId: { $in: [id] } });
       result.data = postLike;
       result.postLikeData = postData;
       result.message = "Reaction removed successfully";

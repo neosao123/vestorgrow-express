@@ -316,7 +316,7 @@ module.exports = {
   },
 
   suggestedUsers: async function (req, res) {
-    let result = await UserServ.suggestedUsers(req.currUser);
+    let result = await UserServ.suggestedUsers(req.body,req.currUser);
     utils.sendResponse(result, req, res);
   },
 

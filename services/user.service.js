@@ -527,8 +527,8 @@ module.exports = {
       if (session) {
         session.updatedAt = new Date();
         session.isLogin = false;
-        await session.save(); 
-      } 
+        await session.save();
+      }
       result.data = await User.findByIdAndUpdate(body._id, { $set: { is_online: false } });
     } catch (err) {
       result.err = err.message;
@@ -954,11 +954,16 @@ module.exports = {
     return result;
   },
 
-  suggestedUsers: async function (currUser) {
+  suggestedUsers: async function (payload, currUser) {
     let result = {};
-
-    let sortBy = { followers: "desc" };
     try {
+      let { page } = payload;
+
+      const pageNumber = page !== undefined ? parseInt(page) : 1;
+      const pageSize = 10;
+
+      let sortBy = { followers: "desc" };
+
       let userIdArray = [];
       userIdArray.push(currUser._id);
 
@@ -986,7 +991,7 @@ module.exports = {
         }
       }
 
-      const users = await User.find({ _id: { $nin: userIdArray } }).sort(sortBy);
+      const users = await User.find({ _id: { $nin: userIdArray } }).skip((pageNumber - 1) * pageSize).limit(pageSize).sort(sortBy);
 
       if (users.length > 0) {
         for (let user of users) {
@@ -1004,11 +1009,14 @@ module.exports = {
 
       const followingUsers = await UserFollower.find({ userId: currUser._id }).populate("followingId");
 
+      const totalPages = Math.ceil(count / pageSize);
+
       result = {
-        userId: currUser._id,
-        followingAlready: followingUsers,
+        //userId: currUser._id,
+        //followingAlready: followingUsers,
         data: users,
-        total: count
+        total: count,
+        totalPages: totalPages
       };
     } catch (err) {
       result.err = err.message;
