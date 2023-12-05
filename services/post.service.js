@@ -9,6 +9,7 @@ const Postkeyword = require("../models/PostKeywords.model");
 const { default: mongoose } = require("mongoose");
 const { post } = require("../routes/post.route");
 const ffmpeg = require('fluent-ffmpeg');
+const PostKeywordsModel = require("../models/PostKeywords.model");
 
 module.exports = {
   add: async function (post, currUser) {
@@ -21,7 +22,7 @@ module.exports = {
       const postTags = postKeywords.split(",");
       const wordsSet = new Set();
       postTags.map((word) => {
-        wordsSet.add(word); // Add lowercase word to the set
+        wordsSet.add(word.toLowerCase()); // Add lowercase word to the set
       });
       uniqueKeywords = Array.from(wordsSet);
       post.postKeywords = uniqueKeywords;
@@ -32,7 +33,7 @@ module.exports = {
     try {
       result.data = await new Post(post).save();
 
-      if (uniqueKeywords.length > 0) {
+      if (uniqueKeywords.length > 0 && post.shareType==="Public") {
         uniqueKeywords.map(async (keyword) => {
           const keyTag = keyword.toLowerCase();
           const keywordData = await Postkeyword.findOne({ keywordSmallCase: keyTag });
@@ -84,6 +85,11 @@ module.exports = {
     let toBeDeleted = [];
     try {
       result.data = await Post.findById(id);
+      let postkeywords = result.data.postKeywords;
+      let postkeys = postkeywords.map((el) => el.toLowerCase());
+
+      await PostKeywordsModel.updateMany({ keywordSmallCase: { $in: postkeys } }, { $inc: { count: -1 } });
+
       await Post.findByIdAndDelete(id);
       if (result.data.originalPostId && result.data.originalPostId !== undefined && result.data.originalPostId !== "") {
         //do nothing
@@ -104,6 +110,7 @@ module.exports = {
     let data = null;
     let count;
     let condition = {};
+    console.log("OBJECT:", postObj)
 
     let usrId = currUser._id;
 
@@ -125,7 +132,6 @@ module.exports = {
         return i.followingId + "";
       }
     });
-    console.log("BLOCKEDUSERARRAY:", blockedUserArr)
     let sharedPostUserArr = sharedPostUserList.map((i) => {
       if (!blockedUserArr.includes(i.sharedBy + "")) {
         return i.sharedBy;

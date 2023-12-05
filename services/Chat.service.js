@@ -81,6 +81,7 @@ module.exports = {
   },
 
   listAll: async function (chatObj, currUser) {
+    console.log("chatobj:", chatObj)
     let result = {};
     let data = null;
     let count;

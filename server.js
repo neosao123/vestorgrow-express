@@ -120,7 +120,7 @@ const io = new Server(server, { cors: { origin: "*" } });
 io.on("connection", (socket) => {
   // console.log("socket is connected ");
   socket.on("setup", (userData) => {
-    socket.join(userData._id);
+    socket.join(userData?._id);
     socket.emit("connected");
   });
 

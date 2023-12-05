@@ -8,11 +8,13 @@ const Postkeyword = require("../models/PostKeywords.model");
 
 module.exports = {
   listAll: async function (postObj, currUser) {
+    console.log("postobj:", postObj)
     let result = {};
     let data = null;
     let count;
     let condition = {};
     let sortBy = { createdAt: "desc" };
+    let category = postObj.filter.category.toLowerCase();
     let postLikeList = await PostLike.find({ createdBy: currUser._id }, { postId: 1, _id: 0 });
     let hiddenPostList = await UserPostHidden.find({ userId: currUser._id });
     let blockedUserList = await UserBlocked.find({ userId: currUser._id });
@@ -35,7 +37,7 @@ module.exports = {
         },
         {
           $or: [{ is_hidden: false }, { createdBy: currUser._id }],
-        },
+        }
       ],
     };
     if (postObj.filter !== undefined) {
@@ -52,11 +54,11 @@ module.exports = {
       ) {
         condition["is_active"] = postObj.filter.is_active;
       }
-      if (postObj.filter.keyword !== undefined && postObj.filter.keyword !== "all") {
+      if (category !== undefined && category !== "all") {
         const searchKeyword = postObj.filter.keyword;
 
         condition['postKeywords'] = {
-          $in: [searchKeyword]
+          $in: [category]
         };
 
       }
@@ -65,6 +67,7 @@ module.exports = {
       sortBy = postObj.sortBy;
     }
 
+    // console.log("condition:", condition.postKeywords)
     try {
       if (postObj.start === undefined || postObj.length === undefined) {
         data = await Post.find(condition).populate("createdBy").sort(sortBy);
@@ -75,6 +78,7 @@ module.exports = {
           .skip(postObj.start)
           .sort(sortBy);
       }
+      // console.log("DATAOBJ:", data)
 
       let postIdArray = data.map((i) => i._id);
 
@@ -118,7 +122,7 @@ module.exports = {
         post._doc.isLiked = false;
 
         if (hiddenPostIdsArr.includes(post._id + "")) {
-          post._doc.isHidden = true;
+          post._doc.isHidden = true;  
         }
 
         if (likeArr.includes(post._id + "")) {
