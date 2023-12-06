@@ -62,5 +62,7 @@ router.route("/suggested/users").post(auth, userController.suggestedUsers);
 router.route("/suggestions/tabs").post(auth, userController.suggestionsByTab);
 
 router.route("/set/full-names").get(userController.addFullNamesToExistingUsers);
+router.route("/updatepassword/otp").post(userController.otpVerificationforupdatePassword);
+router.route("/updatepassword/password").post(userController.updatePassword);
 
 module.exports = router;

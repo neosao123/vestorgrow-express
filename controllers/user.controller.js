@@ -3,6 +3,16 @@ const utils = require("../utils/utils");
 const fs = require("fs");
 
 module.exports = {
+  otpVerificationforupdatePassword: async function (req, res) {
+    let result = await UserServ.otpVerificationforupdatePassword(req.body.email, req.body.username);
+    utils.sendResponse(result, req, res);
+  },
+
+  updatePassword: async function (req, res) {
+    let result = await UserServ.updatePassword(req.body.email, req.body.username, req.body.password, req.body.newPassword, req.body.verifyPassword, req.body.otp);
+    utils.sendResponse(result, req, res);
+  },
+
   add: async function (req, res, next) {
     if (req.files && req.files.length > 0) {
       for (let i = 0; i < req.files.length; i++) {
@@ -24,6 +34,7 @@ module.exports = {
     let result = await UserServ.add(user, req.currUser);
     utils.sendResponse(result, req, res);
   },
+
 
   edit: async function (req, res, next) {
     if (req.files && req.files.length > 0) {
@@ -316,7 +327,7 @@ module.exports = {
   },
 
   suggestedUsers: async function (req, res) {
-    let result = await UserServ.suggestedUsers(req.body,req.currUser);
+    let result = await UserServ.suggestedUsers(req.body, req.currUser);
     utils.sendResponse(result, req, res);
   },
 
@@ -324,7 +335,7 @@ module.exports = {
     let result = await UserServ.suggestionsByTab(req.body, req.currUser);
     utils.sendResponse(result, req, res);
   },
-  
+
   addFullNamesToExistingUsers: async function (req, res) {
     let result = await UserServ.addFullNamesToExistingUsers();
     utils.sendResponse(result, req, res);

@@ -25,6 +25,8 @@ const { mongo } = require("mongoose");
 const ejs = require("ejs");
 const { link } = require("fs");
 const { type } = require("os");
+const OtpPasswordUpdate = require("../models/UpdatePassOtp.model");
+const UpdatePassOTP = require("../models/UpdatePassOtp.model");
 
 module.exports = {
   add: async function (user, currUser) {
@@ -648,6 +650,92 @@ module.exports = {
       }
     } catch (err) {
       result.err = err.message;
+      return result;
+    }
+  },
+
+
+  otpVerificationforupdatePassword: async function (email, username) {
+    let result = {};
+    try {
+      let otp = Math.floor(100000 + Math.random() * 900000);
+      const mailData = {
+        username,
+        otp
+      }
+      ejs.renderFile("./views/passwordUpdate.ejs", mailData, (err, htmlData) => {
+        if (err) {
+          return result = {
+            result: false,
+            message: err.toString(),
+          };
+        }
+        let subject = "OTP for password update."
+        let newContent = htmlData;
+        let params = {
+          to: email,
+          subject: `${subject}`,
+          text: newContent
+        }
+        result = utils.emailSend(params);
+        if (result.result === true) {
+          result.message = "OTP sent successfully"
+        }
+      })
+      let otpdata = await new OtpPasswordUpdate({
+        email: email,
+        otp: otp,
+        username: username
+      }).save();
+      console.log("OTP:", otpdata)
+
+      return result;
+    }
+    catch (error) {
+      result.err = error.message;
+      return result;
+    }
+  },
+
+
+  updatePassword: async function (email, username, password, newPassword, verifyPassword, otp) {
+    let result = {};
+    let saltRounds = 10;
+    try {
+      const user = await User.findOne({ email: email }).select("password");
+      const check = await bcrypt.compare(password, user?.password);
+      if (!check) {
+        result.err = "Old password does't match.";
+        return result;
+      }
+      if (newPassword === verifyPassword) {
+        let otp1 = await UpdatePassOTP.findOne({ email: email, username: username });
+        console.log("OTP", otp1)
+        if (!otp1) {
+          result.message = "Invalid otp"
+          return result;
+        }
+        console.log(otp1.otp, otp)
+        if (otp1.otp + "" === otp) {
+          let salt = bcrypt.genSaltSync(saltRounds); // creating salt
+          let hash = bcrypt.hashSync(newPassword, salt); // create hash
+          const user_updated = await User.findByIdAndUpdate({ _id: user._id }, { $set: { password: hash } }, { new: true });
+          await UpdatePassOTP.findOneAndDelete({ email: email, username: username, otp: Number(otp1.otp) });
+          result.message = "Password updated successfully.";
+          result.user = user_updated;
+        }
+        else {
+          result.message = "Invalid OTP"
+        }
+      }
+      else {
+        result.message = "please Enter confirm password same as new password"
+      }
+      return result;
+    }
+    catch (err) {
+      result.err = err.message;
+      console.log(result)
       return result;
     }
   },
