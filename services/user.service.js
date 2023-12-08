@@ -704,18 +704,23 @@ module.exports = {
     try {
       const user = await User.findOne({ email: email }).select("password");
       const check = await bcrypt.compare(password, user?.password);
-      if (!check) {
-        result.err = "Old password does't match.";
+      let otp1 = await UpdatePassOTP.findOne({ email: email, username: username }).sort({ createdAt: -1 }).exec(); // Sort in descending order (latest first)
+      if (!otp1) {
+        result.message = "Invalid otp"
         return result;
       }
+      if (!check) {
+        result.message = "Old password does't match.";
+        await UpdatePassOTP.findOneAndDelete({ email: email, username: username, otp: Number(otp1.otp) });
+        return result;
+      }
+
       if (newPassword === verifyPassword) {
         let otp1 = await UpdatePassOTP.findOne({ email: email, username: username });
-        console.log("OTP", otp1)
         if (!otp1) {
           result.message = "Invalid otp"
           return result;
         }
-        console.log(otp1.otp, otp)
         if (otp1.otp + "" === otp) {
           let salt = bcrypt.genSaltSync(saltRounds); // creating salt
           let hash = bcrypt.hashSync(newPassword, salt); // create hash
@@ -726,16 +731,17 @@ module.exports = {
         }
         else {
           result.message = "Invalid OTP"
+          await UpdatePassOTP.findOneAndDelete({ email: email, username: username, otp: Number(otp1.otp) });
         }
       }
       else {
+        await UpdatePassOTP.findOneAndDelete({ email: email, username: username, otp: Number(otp1.otp) });
         result.message = "please Enter confirm password same as new password"
       }
       return result;
     }
     catch (err) {
       result.err = err.message;
-      console.log(result)
       return result;
     }
   },

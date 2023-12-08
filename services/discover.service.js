@@ -8,7 +8,6 @@ const Postkeyword = require("../models/PostKeywords.model");
 
 module.exports = {
   listAll: async function (postObj, currUser) {
-    console.log("postobj:", postObj)
     let result = {};
     let data = null;
     let count;
