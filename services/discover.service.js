@@ -7,7 +7,7 @@ const UserBlocked = require("../models/UserBlocked.model");
 const Postkeyword = require("../models/PostKeywords.model");
 
 module.exports = {
-  listAll: async function (postObj, currUser) {
+  listAll: async function (postObj, page, currUser) {
     let result = {};
     let data = null;
     let count;
@@ -23,6 +23,8 @@ module.exports = {
     // let followingArr = followingListData.map(i => (i.followingId))
     // let sharedPostUserArr = sharedPostUserList.map(i => (i.sharedBy))
     let likeArr = postLikeList.map((i) => i.postId + "");
+    let pageNumber = page || 0;
+    let skip = (parseInt(pageNumber) - 1) * 18;
     // followingArr.push(currUser._id)
     // sharedPostUserArr.push(currUser._id)
     condition = {
@@ -69,12 +71,12 @@ module.exports = {
     // console.log("condition:", condition.postKeywords)
     try {
       if (postObj.start === undefined || postObj.length === undefined) {
-        data = await Post.find(condition).populate("createdBy").sort(sortBy);
+        data = await Post.find(condition).populate("createdBy").skip(skip).limit(18).sort(sortBy);
       } else {
         data = await Post.find(condition)
           .populate("createdBy")
-          .limit(parseInt(postObj.length))
-          .skip(postObj.start)
+          .skip(skip)
+          .limit(18)
           .sort(sortBy);
       }
       // console.log("DATAOBJ:", data)
@@ -121,7 +123,7 @@ module.exports = {
         post._doc.isLiked = false;
 
         if (hiddenPostIdsArr.includes(post._id + "")) {
-          post._doc.isHidden = true;  
+          post._doc.isHidden = true;
         }
 
         if (likeArr.includes(post._id + "")) {
@@ -137,6 +139,7 @@ module.exports = {
       }
 
       const popularKeyowrds = await Postkeyword.find({}).select({ _id: -1, keyword: 1 }).sort({ count: -1 }).limit(8);
+      let totalPages = Math.ceil(count / 18);
 
       result = {
         reactions: reactions,
@@ -144,6 +147,7 @@ module.exports = {
         total: count,
         popularKeyowrds: popularKeyowrds,
         currPage: parseInt(postObj.start / postObj.length) + 1,
+        totalPages
       };
     } catch (err) {
       result.err = err.message;

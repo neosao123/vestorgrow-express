@@ -5,7 +5,7 @@ const postkeywordsService = require("../services/postkeywords.service");
 
 module.exports = {
   listAll: async function (req, res) {
-    let result = await discoverServ.listAll(req.body, req.currUser);
+    let result = await discoverServ.listAll(req.body, req.query.page, req.currUser);
     utils.sendResponse(result, req, res);
   },
 

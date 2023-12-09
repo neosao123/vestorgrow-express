@@ -617,7 +617,7 @@ module.exports = {
                 username: data.user_name
               };
 
-              ejs.renderFile("./views/resetpassoword.ejs", mailData, (err, htmlData) => {
+              ejs.renderFile("./views/resetpassword.ejs", mailData, (err, htmlData) => {
                 if (err) {
                   return result = {
                     result: false,
@@ -687,7 +687,6 @@ module.exports = {
         otp: otp,
         username: username
       }).save();
-      console.log("OTP:", otpdata)
 
       return result;
     }
@@ -716,12 +715,8 @@ module.exports = {
       }
 
       if (newPassword === verifyPassword) {
-        let otp1 = await UpdatePassOTP.findOne({ email: email, username: username });
-        if (!otp1) {
-          result.message = "Invalid otp"
-          return result;
-        }
-        if (otp1.otp + "" === otp) {
+        console.log("OTP1:", otp1.otp, "OTP:", otp)
+        if (otp1?.otp === +otp) {
           let salt = bcrypt.genSaltSync(saltRounds); // creating salt
           let hash = bcrypt.hashSync(newPassword, salt); // create hash
           const user_updated = await User.findByIdAndUpdate({ _id: user._id }, { $set: { password: hash } }, { new: true });
@@ -730,7 +725,7 @@ module.exports = {
           result.user = user_updated;
         }
         else {
-          result.message = "Invalid OTP"
+          result.message = "Invalid OTP2"
           await UpdatePassOTP.findOneAndDelete({ email: email, username: username, otp: Number(otp1.otp) });
         }
       }
