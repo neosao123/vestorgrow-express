@@ -20,7 +20,7 @@ module.exports = {
   },
 
   listPopularTags: async function (req, res) {
-    let result = await postkeywordsService.getPopularKeywords();
+    let result = await postkeywordsService.getPopularKeywords(req.body.category);
     utils.sendResponse(result, req, res)
   }
 };

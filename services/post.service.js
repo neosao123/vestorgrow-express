@@ -33,7 +33,7 @@ module.exports = {
     try {
       result.data = await new Post(post).save();
 
-      if (uniqueKeywords.length > 0 && post.shareType==="Public") {
+      if (uniqueKeywords.length > 0 && post.shareType === "Public") {
         uniqueKeywords.map(async (keyword) => {
           const keyTag = keyword.toLowerCase();
           const keywordData = await Postkeyword.findOne({ keywordSmallCase: keyTag });
@@ -42,7 +42,7 @@ module.exports = {
               $inc: { count: 1 },
             });
           } else {
-            new Postkeyword({ keyword: keyword, keywordSmallCase: keyTag, count: 1 }).save();
+            new Postkeyword({ keyword: keyword, keywordSmallCase: keyTag, count: 1, category: post.category }).save();
           }
         });
       }

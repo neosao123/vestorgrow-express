@@ -13,6 +13,10 @@ const postkeyword_scema = mongoose.Schema(
         count: {
             type: Number,
             default: 0,
+        },
+        category: {
+            type: String,
+            default: "financial"
         }
     },
     { timestamps: { createdAt: "createdAt" } }

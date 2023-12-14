@@ -23,8 +23,9 @@ module.exports = {
     // let followingArr = followingListData.map(i => (i.followingId))
     // let sharedPostUserArr = sharedPostUserList.map(i => (i.sharedBy))
     let likeArr = postLikeList.map((i) => i.postId + "");
-    let pageNumber = page || 0;
+    let pageNumber = page || 1;
     let skip = (parseInt(pageNumber) - 1) * 18;
+    console.log("skip:", skip)
     // followingArr.push(currUser._id)
     // sharedPostUserArr.push(currUser._id)
     condition = {
@@ -63,23 +64,24 @@ module.exports = {
         };
 
       }
+      if (postObj.filter.maincategory !== undefined && postObj.filter.maincategory !== "show_all") {
+        condition["category"] = postObj.filter.maincategory;
+      }
     }
     if (postObj.sortBy !== undefined) {
       sortBy = postObj.sortBy;
     }
-
-    // console.log("condition:", condition.postKeywords)
     try {
       if (postObj.start === undefined || postObj.length === undefined) {
         data = await Post.find(condition).populate("createdBy").skip(skip).limit(18).sort(sortBy);
       } else {
         data = await Post.find(condition)
           .populate("createdBy")
+          .select("category")
           .skip(skip)
           .limit(18)
           .sort(sortBy);
       }
-      // console.log("DATAOBJ:", data)
 
       let postIdArray = data.map((i) => i._id);
 

@@ -56,6 +56,11 @@ const post_schema = mongoose.Schema(
             type: String,
             default: ""
         }
+        ,
+        category: {
+            type: String,
+            default: "financial"
+        }
     },
     { timestamps: { createdAt: "createdAt" } }
 );
