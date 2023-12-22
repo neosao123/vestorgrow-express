@@ -360,6 +360,75 @@ module.exports = {
     return result;
   },
 
+
+  sendReqtoFollow: async function (data, currUser) {
+    let result = {};
+    try {
+      if (currUser == data.followingId) {
+        throw Error("You can't follow your self");
+      }
+
+      let requested = await UserFollowerTemp.findOne({ userId: currUser, followingId: data.followingId });
+      if (requested) {
+        result.err = "Already requested";
+        return result;
+      }
+
+      let following = await UserFollower.findOne({ userId: currUser, followingId: data.followingId });
+      if (following) {
+        result.err = "Already following this user";
+        return result;
+      }
+
+      let userDetail = await User.findById(data.followingId);
+      if (!userDetail?.setting || !userDetail.setting.private) {
+
+        let fdata = { userId: currUser, followingId: data.followingId };
+
+        result.data = await new UserFollower(fdata).save();
+
+
+        const followingUsers = await UserFollower.find({ userId: currUser, followingId: { $ne: null } }).populate('followingId');
+
+        if (followingUsers.length > 0) {
+          let cnt = 0;
+          for (let fol of followingUsers) {
+            if (fol.followingId) {
+              cnt++;
+            }
+          }
+          console.log(cnt)
+          result.followingCnt = cnt;
+          await User.findByIdAndUpdate(currUser, { $set: { following: cnt } });
+        }
+
+        const followers = await UserFollower.find({ followingId: data.followingId }).populate('userId');
+
+        if (followers.length > 0) {
+          let cnta = 0;
+          for (let fol of followers) {
+            if (fol.userId) {
+              cnta++;
+            }
+          }
+          result.followersCount = cnta;
+          await User.findByIdAndUpdate(data.userId, { $set: { following: cnta } });
+        }
+
+        // await User.findByIdAndUpdate(data.followingId, { $set: { followers: followers } });
+
+      } else {
+        data = { userId: currUser, followingId: data.followingId, requested: true };
+        result.data = await new UserFollowerTemp(data).save();
+      }
+      result.currentUserUd = currUser;
+
+    } catch (err) {
+      result.err = err.message;
+    }
+    return result;
+  },
+
   rejectReq: async function (id, currUser) {
     let result = {};
     try {

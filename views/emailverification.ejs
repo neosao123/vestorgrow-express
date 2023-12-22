@@ -1,0 +1,58 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vestorgrow - Activation Link</title>
+    <style rel="stylesheet" type="text/css">
+        * {
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+
+<body style="font-family: Arial, sans-serif; background-color: #e4e4e4; width: 100%; margin: 0 auto; padding: 0">
+    <div style="width: 100%; padding: 2rem">
+        <div>
+            <img src="https://api.vestorgrow.com/assets/logo-dark.png" alt="" width="150px"
+                style="margin-bottom: 1rem" />
+        </div>
+        <div style="background-color: #ffffff; width: 100%; border-radius: 1rem; position: relative; padding: 2rem">
+            <img src="https://api.vestorgrow.com/assets/power-off.png" alt="" width="32px" height="32px"
+                style="backdrop-filter: #00808b" />
+            <div>
+                <h3 style="font-size: 18px; font-weight: 600; line-height: 1.5">Activate Account</h3>
+                <p style="line-height: 1.5">Hello <%= full_name %>,</p>
+                <p style="line-height: 1.5">Thanks for signing up to the VestorGrow!</p>
+            </div>
+            <p>This is otp for email verification</p>
+            <h1>
+                <%= otp %>
+            </h1>
+        </div>
+        <div style="width: 100%; margin-top: 2rem; color: #585858">
+            <small>Want to give us feedback? Let us know what you think <a target="_blank"
+                    href="https://vestorgrow.com">here.</a></small>
+        </div>
+        <table style="width: 100%; margin-top: 2rem">
+            <tr>
+                <td style="width: 60%">
+                    <img src="https://api.vestorgrow.com/assets/logo.png" alt="" width="120px"
+                        style="filter: invert(100%); -webkit-filter: invert(100%)" />
+                </td>
+                <td style="width: 40%; text-align: right">
+                    <img src="https://api.vestorgrow.com/assets/insta.png" alt=""
+                        style="width: 24px; height: 24px; display: inline; margin: 0 5px" />
+                    <img src="https://api.vestorgrow.com/assets/fb.png" alt=""
+                        style="width: 24px; height: 24px; display: inline; margin: 0 5px" />
+                    <img src="https://api.vestorgrow.com/assets/twitter.png" alt=""
+                        style="width: 24px; height: 24px; display: inline; margin: 0 5px" />
+                    <img src="https://api.vestorgrow.com/assets/youtube.png" alt=""
+                        style="width: 24px; height: 24px; display: inline; margin: 0 5px" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</body>
+
+</html>

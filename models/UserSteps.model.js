@@ -6,7 +6,23 @@ const UserStepsSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "User"
         },
+        otpVefication: {
+            type: Boolean,
+            default: false,
+        },
+        passwordUpdate: {
+            type: Boolean,
+            default: false
+        },
         ProfileUpdates: {
+            type: Boolean,
+            default: false
+        },
+        usernameUpdate: {
+            type: Boolean,
+            default: false
+        },
+        bioUpdate: {
             type: Boolean,
             default: false
         },
@@ -17,7 +33,12 @@ const UserStepsSchema = new mongoose.Schema(
         groupSuggestion: {
             type: Boolean,
             default: false
-        }
+        },
+        profilepictureUpdate: {
+            type: Boolean,
+            default: false
+        },
+        
     },
     {
         timestamps: { createdAt: "createdAt" },

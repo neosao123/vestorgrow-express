@@ -39,6 +39,12 @@ module.exports = {
     utils.sendResponse(result, req, res);
   },
 
+  sendReqtoFollow: async function (req, res) {
+    let faq = req.body;
+    let result = await userFollowerServ.sendReqtoFollow(faq, req.body.userId);
+    utils.sendResponse(result, req, res);
+  },
+
   rejectReq: async function (req, res) {
     let result = await userFollowerServ.rejectReq(req.params.id, req.currUser);
     utils.sendResponse(result, req, res);

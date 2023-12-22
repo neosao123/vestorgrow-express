@@ -15,6 +15,7 @@ module.exports = {
       res.status(status).send(result);
     }
   },
+  
   socialLogin: async function (req, res) {
 
 

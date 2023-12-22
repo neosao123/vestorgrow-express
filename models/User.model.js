@@ -14,7 +14,7 @@ const userSchema = mongoose.Schema(
     last_name: {
       type: String,
       default: ""
-    }, 
+    },
     email: {
       type: String,
     },
@@ -161,6 +161,10 @@ const userSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isAvatar: {
+      type: Boolean,
+      default: false
+    }
   },
   { timestamps: { createdAt: "createdAt" } }
 );

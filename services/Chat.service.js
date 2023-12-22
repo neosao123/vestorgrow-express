@@ -378,6 +378,39 @@ module.exports = {
     return result;
   },
 
+  TojoinGroup: async function (body, currUser) {
+    let result = {};
+    let userId = currUser;
+    if (body.user_id) {
+      userId = body.user_id;
+    }
+    try {
+      if (body && body.groupId) {
+        let randomColor;
+        const chat = await Chat.findOne({ _id: body.groupId });
+        do {
+          randomColor = "#" + Math.floor(Math.random() * 16777215).toString(16);
+        } while (chat.colour.includes(randomColor));
+
+        result.data = await Chat.findOneAndUpdate(
+          { _id: body.groupId, users: { $nin: [currUser._id] } },
+          { $push: { users: currUser._id, colour: randomColor } },
+          { new: true }
+        );
+        if (result.data) {
+          await GroupInvitation.findOneAndDelete({
+            userId: currUser._id,
+            groupId: body.groupId,
+          });
+        }
+        return { message: "Updated Successfully" };
+      }
+    } catch (err) {
+      result.err = err.message;
+    }
+    return result;
+  },
+
   deleteInvitation: async function (body, currUser) {
     let result = {};
     try {

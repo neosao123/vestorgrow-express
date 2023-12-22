@@ -148,7 +148,7 @@ module.exports = {
       data: null
     }
     try {
-      result.data = await User.findByIdAndUpdate(body._id, { $set: body }, { new: true })
+      result.data = await User.findByIdAndUpdate(body._id, { $set: { ...body, isAvatar: false } }, { new: true })
     } catch (err) {
       result.err = err.message;
     }
@@ -267,6 +267,7 @@ module.exports = {
     };
     try {
       if (id) {
+        console.log(id)
         result.data = await User.findById(id);
         const res = await UserSteps.findOne({ userId: id })
         if (res) {
@@ -433,6 +434,9 @@ module.exports = {
             result.data = user;
             const res = await UserSteps.findOne({ userId: user._id })
             if (res) {
+              result.data._doc.usernameUpdate = res.usernameUpdate;
+              result.data._doc.bioUpdate = res.bioUpdate;
+              result.data._doc.profilepictureUpdate = res.profilepictureUpdate;
               result.data._doc.ProfileUpdates = res.ProfileUpdates;
               result.data._doc.UserSuggestions = res.UserSuggestions;
               result.data._doc.groupSuggestion = res.groupSuggestion;
@@ -442,6 +446,9 @@ module.exports = {
             result.data = user;
             const res = await UserSteps.findOne({ userId: user._id })
             if (res) {
+              result.data._doc.usernameUpdate = res.usernameUpdate;
+              result.data._doc.bioUpdate = res.bioUpdate;
+              result.data._doc.profilepictureUpdate = res.profilepictureUpdate;
               result.data._doc.ProfileUpdates = res.ProfileUpdates;
               result.data._doc.UserSuggestions = res.UserSuggestions;
               result.data._doc.groupSuggestion = res.groupSuggestion;
@@ -705,17 +712,18 @@ module.exports = {
       const check = await bcrypt.compare(password, user?.password);
       let otp1 = await UpdatePassOTP.findOne({ email: email, username: username }).sort({ createdAt: -1 }).exec(); // Sort in descending order (latest first)
       if (!otp1) {
-        result.message = "Invalid otp"
+        result.message = "Invalid OTP, please enter valid OTP."
+        result.status = 300
         return result;
       }
       if (!check) {
-        result.message = "Old password does't match.";
         await UpdatePassOTP.findOneAndDelete({ email: email, username: username, otp: Number(otp1.otp) });
+        result.message = "Old password does't match.";
+        result.status = 300
         return result;
       }
 
       if (newPassword === verifyPassword) {
-        console.log("OTP1:", otp1.otp, "OTP:", otp)
         if (otp1?.otp === +otp) {
           let salt = bcrypt.genSaltSync(saltRounds); // creating salt
           let hash = bcrypt.hashSync(newPassword, salt); // create hash
@@ -725,12 +733,13 @@ module.exports = {
           result.user = user_updated;
         }
         else {
-          result.message = "Invalid OTP2"
-          await UpdatePassOTP.findOneAndDelete({ email: email, username: username, otp: Number(otp1.otp) });
+          result.status = 300
+          result.message = "Invalid OTP, please enter valid OTP."
         }
       }
       else {
         await UpdatePassOTP.findOneAndDelete({ email: email, username: username, otp: Number(otp1.otp) });
+        result.status = 300
         result.message = "please Enter confirm password same as new password"
       }
       return result;
@@ -1328,5 +1337,21 @@ module.exports = {
       result.err = error.message;
     }
     return result;
+  },
+
+  deleteTestUser: async function (email) {
+    let result = {};
+    try {
+      await User.findOneAndDelete({ email: email });
+      result.success = 200;
+      result.message = "account deleted successfully."
+    }
+    catch (err) {
+      result.status = 400
+      result.err = err.message;
+    }
+    return result;
   }
+
+
 };

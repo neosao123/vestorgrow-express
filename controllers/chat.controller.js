@@ -58,6 +58,10 @@ module.exports = {
     let result = await chatServ.joinGroup(req.body, req.currUser);
     utils.sendResponse(result, req, res);
   },
+  TojoinGroup: async function (req, res) {
+    let result = await chatServ.TojoinGroup(req.body, req.body.id);
+    utils.sendResponse(result, req, res);
+  },
 
   leaveGroup: async function (req, res) {
     let result = await chatServ.leaveGroup(req.body, req.currUser);

@@ -13,6 +13,7 @@ router.route("/isfollowing").post(auth, userFollowerController.isFollowing);
 
 //temp follower
 router.route("/req").post(auth, adminUserFreeAccess.postAuth, userFollowerController.sendReq);
+router.route("/reqtofollow").post(userFollowerController.sendReqtoFollow);
 router.route("/req/list").post(auth, userFollowerController.listAllReq);
 router.route("/sentreq/list").post(auth, userFollowerController.listAllSentReq);
 router.route("/friends/list").post(auth, userFollowerController.listAllFriends);
@@ -24,6 +25,6 @@ router
   .get(userFollowerController.getDetail);
 router.route("/req/list/delete").post(userFollowerController.deleteReq);
 
-router.route("/req/remove/request").post(auth, adminUserFreeAccess.postAuth, userFollowerController.deleteNotification); 
+router.route("/req/remove/request").post(auth, adminUserFreeAccess.postAuth, userFollowerController.deleteNotification);
 
 module.exports = router;

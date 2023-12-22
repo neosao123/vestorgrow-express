@@ -82,6 +82,7 @@ const MobileUserRoute = require("./routes/mobileUser.route");
 const AppleUserRoute = require("./routes/appleUser.route");
 const CountryRoute = require("./routes/country.route");
 const stepsRoute = require("./routes/userSteps.route");
+const webUserRoute = require("./routes/webUser.route");
 
 // New Routes
 app.use("/api/v1/auth/google/callback", GoogleSignUpRoute);
@@ -113,7 +114,7 @@ app.use("/globalmessage", GlobalMessageRoute);
 app.use("/report", ReportPostRoute);
 app.use("/payment", PaymentRoute);
 app.use("/steps", stepsRoute);
-app.use("/", MobileUserRoute, CountryRoute, AppleUserRoute);
+app.use("/", webUserRoute, MobileUserRoute, CountryRoute, AppleUserRoute);
 
 let server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });

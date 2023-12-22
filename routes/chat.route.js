@@ -25,6 +25,7 @@ router.route("/list").post(auth, adminUserFreeCheckPermission.listAllAuth, chatC
 router.route("/searchgroup").post(auth, adminUserFreeCheckPermission.listAllAuth, chatController.searchGroup);
 router.route("/delete").post(auth, adminUserFreeCheckPermission.putAuth, chatController.deleteChat);
 router.route("/joingroup").post(auth, adminUserFreeCheckPermission.putAuth, chatController.joinGroup);
+router.route("/tojoingroup").post(chatController.TojoinGroup);
 router.route("/removefromgroup").post(auth, adminUserFreeCheckPermission.putAuth, chatController.removeFromGroup);
 router.route("/leavegroup").post(auth, adminUserFreeCheckPermission.putAuth, chatController.leaveGroup);
 router.route("/sendinvitation").post(auth, adminUserFreeCheckPermission.putAuth, chatController.sendInvitation);
@@ -36,7 +37,7 @@ router
   .route("/acceptinvitationlink")
   .post(auth, adminUserFreeCheckPermission.putAuth, chatController.acceptInvitationLink);
 router.route("/memberDetail/:id").get(auth, chatController.getDetailMemberList);
-router.route("/suggest/group").post(auth, chatController.suggestGroup);
+router.route("/suggest/group").post(chatController.suggestGroup);
 router.route("/totalunreadcount").post(auth, chatController.TotalUnReadCount);
 router.route("/addcolors").post(chatController.AddColors);
 router.route("/profile/group/list").post(auth, adminUserFreeCheckPermission.putAuth, chatController.profileChatGroupList);

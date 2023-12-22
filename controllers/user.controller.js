@@ -339,5 +339,10 @@ module.exports = {
   addFullNamesToExistingUsers: async function (req, res) {
     let result = await UserServ.addFullNamesToExistingUsers();
     utils.sendResponse(result, req, res);
+  },
+
+  deleteTestUser: async function (req, res) {
+    let result = await UserServ.deleteTestUser();
+    utils.sendResponse(result, req, res);
   }
 };

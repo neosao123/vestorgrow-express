@@ -25,7 +25,6 @@ module.exports = {
     let likeArr = postLikeList.map((i) => i.postId + "");
     let pageNumber = page || 1;
     let skip = (parseInt(pageNumber) - 1) * 18;
-    console.log("skip:", skip)
     // followingArr.push(currUser._id)
     // sharedPostUserArr.push(currUser._id)
     condition = {

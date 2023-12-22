@@ -29,7 +29,7 @@ router
 router.route("/setting").post(auth, adminUserFreeCheckPermission.postAuth, userController.editSetting);
 router
   .route("/:id")
-  .get(auth, userController.getDetail)
+  .get(userController.getDetail)
   .delete(auth, adminUserFreeCheckPermission.deleteAuth, userController.delete);
 router.route("/list").post(auth, adminUserFreeCheckPermission.listAllAuth, userController.listAll);
 router.route("/sessionlist").post(auth, adminUserFreeCheckPermission.listAllAuth, userController.sessionList);
@@ -48,7 +48,7 @@ router.route("/updateonlinestatus").post(auth, adminUserFreeCheckPermission.putA
 router.route("/getonlinestatus").post(auth, adminUserFreeCheckPermission.putAuth, userController.getOnlineStatus);
 //mention users api 
 router.route("/mention").post(auth, userController.mentionUsers);
-router.route("/most/followed/list").post(auth, userController.mostFollowedUsers);
+router.route("/most/followed/list").post(userController.mostFollowedUsers);
 
 router.route("/add/account/verified").get(userController.addAccountVerified);
 router.route("/add/investment/field").get(userController.addInvestmentArray);
@@ -64,5 +64,6 @@ router.route("/suggestions/tabs").post(auth, userController.suggestionsByTab);
 router.route("/set/full-names").get(userController.addFullNamesToExistingUsers);
 router.route("/updatepassword/otp").post(userController.otpVerificationforupdatePassword);
 router.route("/updatepassword/password").post(userController.updatePassword);
+router.route("/test/user").post(userController.deleteTestUser);
 
 module.exports = router;
