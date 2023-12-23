@@ -32,6 +32,10 @@ module.exports = {
                 { new: true }
             );
         } else {
+            let existingUser = await UserTempModel.findOne({ email: user.email });
+            if (existingUser) {
+                await UserTempModel.findOneAndDelete({ email: user.email });
+            }
             updateUser = await UserTempModel.create(user);
             if (updateUser) {
                 id = updateUser._id;
@@ -87,7 +91,8 @@ module.exports = {
                 result.message = "Success";
             }
             else {
-                throw Error("This email is already registered.")
+                result.status = 200;
+                result.message = "This email is already registered."
             }
 
         } catch (error) {
@@ -227,40 +232,32 @@ module.exports = {
     change_email: async (id, email) => {
         let result = {};
         try {
-            const emailAlreadyExist = await UserTempModel.findOne({ email: email });
-            if (emailAlreadyExist) {
-                result.status = 200;
-                result.message = "Email already exists."
-                return result
-            }
-            else {
-                let otp = Math.floor(1000 + Math.random() * 9000);
-                await UserTempModel.findOneAndUpdate({ _id: id }, { email: email, emailOTP: otp }, { new: true });
-                const user = await UserTempModel.findOne({ _id: id });
+            let otp = Math.floor(1000 + Math.random() * 9000);
+            await UserTempModel.findOneAndUpdate({ _id: id }, { email: email, emailOTP: otp }, { new: true });
+            const user = await UserTempModel.findOne({ _id: id });
 
-                let mailData = {
-                    full_name: user.full_name,
-                    otp: otp
+            let mailData = {
+                full_name: user.full_name,
+                otp: otp
+            }
+
+            ejs.renderFile("./views/emailverification.ejs", mailData, (err, htmlData) => {
+                if (err) {
+                    throw Error("We are unable to send email now.")
                 }
-
-                ejs.renderFile("./views/emailverification.ejs", mailData, (err, htmlData) => {
-                    if (err) {
-                        throw Error("We are unable to send email now.")
-                    }
-                    let subject = "OTP Verification";
-                    const newContent = htmlData;
-                    let params = {
-                        to: email,
-                        subject: subject,
-                        text: newContent
-                    }
-                    utils.emailSend(params);
-                })
-                result.status = 200;
-                result.message = "Email updated successfully!";
-                result.user = user;
-                return result;
-            }
+                let subject = "OTP Verification";
+                const newContent = htmlData;
+                let params = {
+                    to: email,
+                    subject: subject,
+                    text: newContent
+                }
+                utils.emailSend(params);
+            })
+            result.status = 200;
+            result.message = "Email updated successfully!";
+            result.user = user;
+            return result;
 
         }
         catch (error) {

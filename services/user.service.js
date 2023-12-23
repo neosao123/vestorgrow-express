@@ -148,7 +148,8 @@ module.exports = {
       data: null
     }
     try {
-      result.data = await User.findByIdAndUpdate(body._id, { $set: { ...body, isAvatar: false } }, { new: true })
+      result.data = await User.findByIdAndUpdate(body._id, { $set: { ...body, isAvatar: false } }, { new: true });
+      await UserSteps.findOneAndUpdate({ userId: result.data._id }, { profilepictureUpdate: true });
     } catch (err) {
       result.err = err.message;
     }
@@ -617,7 +618,8 @@ module.exports = {
               data.reset_password_token = undefined;
               data.reset_password_expires = undefined;
               data.is_action_for_password = false;
-              await data.save();
+              let users = await data.save();
+              await UserSteps.findOneAndUpdate({ userId: users._id }, { $set: { passwordUpdate: true } }, { new: true });
               await UserOtp.deleteMany({ email: data.email });
 
               var mailData = {
