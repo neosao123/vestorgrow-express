@@ -1,5 +1,6 @@
 const userStepModel = require("../models/UserSteps.model")
-const User = require('../models/User.model')
+const User = require('../models/User.model');
+const utils = require("../utils/utils");
 
 module.exports = {
     updateUserSuggestion: async function (id) {
@@ -11,14 +12,29 @@ module.exports = {
             result.err = err.message;
         }
     },
-    updateGroupSuggestion: async function (id) {
+    updateGroupSuggestion: async function (id, deviceId, email) {
         let result = {};
         try {
-            result.data = await userStepModel.findOneAndUpdate({ userId: id }, { groupSuggestion: true }, { new: true })
+            let usersteps = await userStepModel.findOneAndUpdate({ userId: id }, { $set: { groupSuggestion: true } }, { new: true });
+            let user = await User.findById(id);
+            user._doc.otpVefication = usersteps.otpVefication;
+            user._doc.passwordUpdate = usersteps.passwordUpdate;
+            user._doc.usernameUpdate = usersteps.usernameUpdate;
+            user._doc.bioUpdate = usersteps.bioUpdate;
+            user._doc.UserSuggestions = usersteps.UserSuggestions;
+            user._doc.groupSuggestion = usersteps.groupSuggestion;
+            user._doc.profilepictureUpdate = usersteps.profilepictureUpdate;
+            result.data = user;
+            result.token = utils.jwtEncode({
+                emailID: email,
+                userId: id,
+                deviceId: deviceId,
+            })
         }
         catch (err) {
             result.err = err.message;
         }
+        return result;
     },
     updateStepsForAllUsers: async function (req, res) {
         let result = {}

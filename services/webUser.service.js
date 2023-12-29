@@ -18,6 +18,8 @@ module.exports = {
         var id = "";
         var status = false;
 
+        console.log("USER:", user)
+
         if (type == OtpVerificationType.EMAIL) {
             user.emailOTP = otp;
         } else {
@@ -54,9 +56,9 @@ module.exports = {
 
     add: async function (user) {
         let result = {};
-        const { full_name, email, date_of_birth } = user;
+        const { first_name, last_name, email, date_of_birth } = user;
         try {
-            if (!full_name || !email || !date_of_birth) {
+            if (!first_name || !last_name || !email || !date_of_birth) {
                 throw Error("All fields required.")
             }
             let CheckEmail = await UserModel.find({ email }).select("+password");
@@ -66,7 +68,7 @@ module.exports = {
                     throw Error("Failed");
                 }
                 let mailData = {
-                    full_name,
+                    full_name: first_name + " " + last_name,
                     otp: insertOtp.otp
                 }
 
@@ -82,7 +84,6 @@ module.exports = {
                         text: newContent
                     }
                     let res = await utils.emailSend(params);
-                    console.log(res)
                 })
                 delete insertOtp.otp
                 result.status = 200;
@@ -110,8 +111,15 @@ module.exports = {
             const User = await UserTempModel.findOne({ email: email });
             if (+otp === User.emailOTP) {
                 // const user = await UserTempModel.findOneAndUpdate({ email: email }, { $set: { accountVerified: true } }, { new: true });
-                const user = await UserModel.create({ email: email, accountVerified: true, full_name: User.full_name, date_of_birth: User.date_of_birth });
-                await userSteps.create({ userId: user._id, otpVefication: true });
+                const user = await UserModel.create({ email: email, accountVerified: true, first_name: User.first_name, last_name: User.last_name, date_of_birth: User.date_of_birth });
+                let usersteps = await userSteps.create({ userId: user._id, otpVefication: true });
+                user._doc.otpVefication = usersteps.otpVefication;
+                user._doc.passwordUpdate = usersteps.passwordUpdate;
+                user._doc.usernameUpdate = usersteps.usernameUpdate;
+                user._doc.bioUpdate = usersteps.bioUpdate;
+                user._doc.UserSuggestions = usersteps.UserSuggestions;
+                user._doc.groupSuggestion = usersteps.groupSuggestion;
+                user._doc.profilepictureUpdate = usersteps.profilepictureUpdate;
                 await UserTempModel.findOneAndDelete({ email: email });
                 result.status = 200;
                 result.user = user;
@@ -164,16 +172,20 @@ module.exports = {
     },
 
     passwordUpdate: async function (email, password) {
-        console.log("email:", email, password)
         let result = {};
         let saltRounds = 10;
         try {
             let salt = bcrypt.genSaltSync(saltRounds); // creating salt
             let hash = bcrypt.hashSync(password, salt);
-            // const user = await UserModel.create({ email: email, accountVerified: true, full_name: userTemp.full_name, date_of_birth: userTemp.date_of_birth, password: hash });
-            // await UserTempModel.findOneAndDelete({ email: email });
             const user = await UserModel.findOneAndUpdate({ email: email }, { $set: { password: hash } }, { new: true })
-            await userSteps.findOneAndUpdate({ userId: user._id }, { passwordUpdate: true }, { new: true });
+            let usersteps = await userSteps.findOneAndUpdate({ userId: user._id }, { passwordUpdate: true }, { new: true });
+            user._doc.otpVefication = usersteps.otpVefication;
+            user._doc.passwordUpdate = usersteps.passwordUpdate;
+            user._doc.usernameUpdate = usersteps.usernameUpdate;
+            user._doc.bioUpdate = usersteps.bioUpdate;
+            user._doc.UserSuggestions = usersteps.UserSuggestions;
+            user._doc.groupSuggestion = usersteps.groupSuggestion;
+            user._doc.profilepictureUpdate = usersteps.profilepictureUpdate;
             result.status = 200;
             result.message = "Success";
             result.user = user;
@@ -210,11 +222,18 @@ module.exports = {
                 } else {
                     await UserModel.findByIdAndUpdate(
                         ObjectId(id),
-                        { user_name },
+                        { $set: { user_name: user_name } },
                         { new: true }
                     );
-                    await userSteps.findOneAndUpdate({ userId: id }, { ProfileUpdates: true, usernameUpdate: true })
+                    let usersteps = await userSteps.findOneAndUpdate({ userId: id }, { $set: { ProfileUpdates: true, usernameUpdate: true } }, { new: true });
                     let user = await UserModel.findOne({ _id: id });
+                    user._doc.otpVefication = usersteps.otpVefication;
+                    user._doc.passwordUpdate = usersteps.passwordUpdate;
+                    user._doc.usernameUpdate = usersteps.usernameUpdate;
+                    user._doc.bioUpdate = usersteps.bioUpdate;
+                    user._doc.UserSuggestions = usersteps.UserSuggestions;
+                    user._doc.groupSuggestion = usersteps.groupSuggestion;
+                    user._doc.profilepictureUpdate = usersteps.profilepictureUpdate;
                     result.status = 200;
                     result.user = user;
                     result.message = "Success";
@@ -271,7 +290,14 @@ module.exports = {
         let result = {};
         try {
             const user = await UserModel.findOneAndUpdate({ _id: id }, { $set: { bio: bio } }, { new: true });
-            await userSteps.findOneAndUpdate({ userId: id }, { $set: { bioUpdate: true } }, { new: true });
+            let usersteps = await userSteps.findOneAndUpdate({ userId: id }, { $set: { bioUpdate: true } }, { new: true });
+            user._doc.otpVefication = usersteps.otpVefication;
+            user._doc.passwordUpdate = usersteps.passwordUpdate;
+            user._doc.usernameUpdate = usersteps.usernameUpdate;
+            user._doc.bioUpdate = usersteps.bioUpdate;
+            user._doc.UserSuggestions = usersteps.UserSuggestions;
+            user._doc.groupSuggestion = usersteps.groupSuggestion;
+            user._doc.profilepictureUpdate = usersteps.profilepictureUpdate;
             result.status = 200;
             result.user = user;
             result.message = "Bio updated successfully."
@@ -287,7 +313,14 @@ module.exports = {
         let result = {};
         try {
             const user = await UserModel.findOneAndUpdate({ _id: id }, { $set: { profile_img: profile_img, isAvatar: true } }, { new: true });
-            await userSteps.findOneAndUpdate({ _id: id }, { $set: { profilepictureUpdate: true } })
+            let usersteps = await userSteps.findOneAndUpdate({ userId: id }, { $set: { profilepictureUpdate: true } }, { new: true });
+            user._doc.otpVefication = usersteps.otpVefication;
+            user._doc.passwordUpdate = usersteps.passwordUpdate;
+            user._doc.usernameUpdate = usersteps.usernameUpdate;
+            user._doc.bioUpdate = usersteps.bioUpdate;
+            user._doc.UserSuggestions = usersteps.UserSuggestions;
+            user._doc.groupSuggestion = usersteps.groupSuggestion;
+            user._doc.profilepictureUpdate = usersteps.profilepictureUpdate;
             result.status = 200;
             result.user = user;
             result.message = "Avatar updated successfully."
@@ -309,7 +342,14 @@ module.exports = {
                 return result;
             }
             let user = await UserModel.create({ ...obj, accountVerified: true });
-            await userSteps.create({ userId: user._id, otpVefication: true, passwordUpdate: true, ProfileUpdates: true });
+            let usersteps = await userSteps.create({ userId: user._id, otpVefication: true, passwordUpdate: true, ProfileUpdates: true });
+            user._doc.otpVefication = usersteps.otpVefication;
+            user._doc.passwordUpdate = usersteps.passwordUpdate;
+            user._doc.usernameUpdate = usersteps.usernameUpdate;
+            user._doc.bioUpdate = usersteps.bioUpdate;
+            user._doc.UserSuggestions = usersteps.UserSuggestions;
+            user._doc.groupSuggestion = usersteps.groupSuggestion;
+            user._doc.profilepictureUpdate = usersteps.profilepictureUpdate;
             result.status = 200;
             result.message = "User created successfully.";
             result.user = user;
@@ -325,7 +365,14 @@ module.exports = {
         let result = {};
         try {
             let user = await UserModel.findOneAndUpdate({ email: email }, { $set: { date_of_birth: date_of_birth } }, { new: true });
-            await userSteps.findOneAndUpdate({ userId: user._id }, { profilepictureUpdate: true })
+            let usersteps = await userSteps.findOneAndUpdate({ userId: user._id }, { profilepictureUpdate: true });
+            user._doc.otpVefication = usersteps.otpVefication;
+            user._doc.passwordUpdate = usersteps.passwordUpdate;
+            user._doc.usernameUpdate = usersteps.usernameUpdate;
+            user._doc.bioUpdate = usersteps.bioUpdate;
+            user._doc.UserSuggestions = usersteps.UserSuggestions;
+            user._doc.groupSuggestion = usersteps.groupSuggestion;
+            user._doc.profilepictureUpdate = usersteps.profilepictureUpdate;
             result.status = 200;
             result.message = "date of birth updated successfully.";
             result.user = user
@@ -339,7 +386,6 @@ module.exports = {
 
     skip_onboardingsteps: async (id, body) => {
         let result = {};
-        console.log("body:", id, body)
         try {
             await userSteps.findOneAndUpdate({ userId: id }, { $set: { ...body } }, { new: true });
             result.status = 200;
@@ -350,7 +396,9 @@ module.exports = {
             result.message = error.message;
         }
         return result;
-    }
+    },
+
+
 
 
 }

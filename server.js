@@ -40,6 +40,7 @@ app.use(cors({
 
 // folder access for url
 app.use("/uploads/Avatars", express.static("uploads"));
+app.use("/uploads/av", express.static("uploads"));
 app.use("/uploads", express.static("uploads"));
 app.use("/assets", express.static("assets"));
 app.set('views', path.join(__dirname, 'views'));
@@ -83,6 +84,7 @@ const AppleUserRoute = require("./routes/appleUser.route");
 const CountryRoute = require("./routes/country.route");
 const stepsRoute = require("./routes/userSteps.route");
 const webUserRoute = require("./routes/webUser.route");
+const avatarRoutes = require("./routes/avatar.route");
 
 // New Routes
 app.use("/api/v1/auth/google/callback", GoogleSignUpRoute);
@@ -115,6 +117,7 @@ app.use("/report", ReportPostRoute);
 app.use("/payment", PaymentRoute);
 app.use("/steps", stepsRoute);
 app.use("/", webUserRoute, MobileUserRoute, CountryRoute, AppleUserRoute);
+app.use("/avatar", avatarRoutes);
 
 let server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });

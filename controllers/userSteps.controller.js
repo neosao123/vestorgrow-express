@@ -6,7 +6,7 @@ module.exports = {
         utils.sendResponse(result, req, res);
     },
     updateGroupSuggestion: async function (req, res) {
-        let result = await userSteps.updateGroupSuggestion(req.params.id);
+        let result = await userSteps.updateGroupSuggestion(req.params.id, req.body.deviceId, req.body.email);
         utils.sendResponse(result, req, res);
     },
     updateStepsForAllUsers: async function (req, res) {

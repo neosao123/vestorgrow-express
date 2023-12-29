@@ -268,13 +268,16 @@ module.exports = {
     };
     try {
       if (id) {
-        console.log(id)
         result.data = await User.findById(id);
-        const res = await UserSteps.findOne({ userId: id })
+        const res = await UserSteps.findOne({ userId: id });
         if (res) {
-          result.data._doc.ProfileUpdates = res.ProfileUpdates;
+          result.data._doc.otpVefication = res.otpVefication;
+          result.data._doc.passwordUpdate = res.passwordUpdate;
+          result.data._doc.usernameUpdate = res.usernameUpdate;
+          result.data._doc.bioUpdate = res.bioUpdate;
           result.data._doc.UserSuggestions = res.UserSuggestions;
           result.data._doc.groupSuggestion = res.groupSuggestion;
+          result.data._doc.profilepictureUpdate = res.profilepictureUpdate;
         }
       } else {
         result.err = "User not found";
@@ -393,6 +396,10 @@ module.exports = {
     let result = {};
     try {
       let user = await User.findOne({ $or: [{ email: email }, { user_name: email }] }).select("+password");
+      if (user && user.password === null) {
+        result.err = "Password not found please reset your password.";
+        return result;
+      }
 
       if (user && user.is_active === false) {
         result.err = "Account is inactive.";
@@ -445,9 +452,11 @@ module.exports = {
             result.message = "OTP sent to your registered email";
           } else {
             result.data = user;
-            const res = await UserSteps.findOne({ userId: user._id })
+            const res = await UserSteps.findOne({ userId: user._id });
             if (res) {
               result.data._doc.usernameUpdate = res.usernameUpdate;
+              result.data._doc.otpVefication = res.otpVefication;
+              result.data._doc.passwordUpdate = res.passwordUpdate;
               result.data._doc.bioUpdate = res.bioUpdate;
               result.data._doc.profilepictureUpdate = res.profilepictureUpdate;
               result.data._doc.ProfileUpdates = res.ProfileUpdates;
@@ -644,6 +653,7 @@ module.exports = {
               });
 
               if (result.result === true) {
+                result.status = 200;
                 result.message = "Password for your account has been reset, please login";
               }
               return result;
@@ -651,6 +661,7 @@ module.exports = {
               result.err = "your password does't match";
             }
           } else {
+            result.status = 201;
             result.err = "your otp does't match";
           }
         } else {
@@ -658,9 +669,11 @@ module.exports = {
         }
       }
     } catch (err) {
+      result.status = 400;
       result.err = err.message;
-      return result;
+      console.log("result:", result)
     }
+    return result;
   },
 
 
