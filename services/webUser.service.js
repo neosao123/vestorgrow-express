@@ -18,8 +18,6 @@ module.exports = {
         var id = "";
         var status = false;
 
-        console.log("USER:", user)
-
         if (type == OtpVerificationType.EMAIL) {
             user.emailOTP = otp;
         } else {
@@ -56,6 +54,7 @@ module.exports = {
 
     add: async function (user) {
         let result = {};
+        console.log("USER:", user);
         const { first_name, last_name, email, date_of_birth } = user;
         try {
             if (!first_name || !last_name || !email || !date_of_birth) {
@@ -249,6 +248,7 @@ module.exports = {
     },
 
     change_email: async (id, email) => {
+        console.log("id:", id, "email:", email)
         let result = {};
         try {
             let otp = Math.floor(1000 + Math.random() * 9000);
@@ -342,7 +342,7 @@ module.exports = {
                 return result;
             }
             let user = await UserModel.create({ ...obj, accountVerified: true });
-            let usersteps = await userSteps.create({ userId: user._id, otpVefication: true, passwordUpdate: true, ProfileUpdates: true });
+            let usersteps = await userSteps.create({ userId: user._id, otpVefication: true, ProfileUpdates: true });
             user._doc.otpVefication = usersteps.otpVefication;
             user._doc.passwordUpdate = usersteps.passwordUpdate;
             user._doc.usernameUpdate = usersteps.usernameUpdate;
@@ -387,8 +387,17 @@ module.exports = {
     skip_onboardingsteps: async (id, body) => {
         let result = {};
         try {
-            await userSteps.findOneAndUpdate({ userId: id }, { $set: { ...body } }, { new: true });
+            let usersteps = await userSteps.findOneAndUpdate({ userId: id }, { $set: { ...body } }, { new: true });
+            let user = await UserModel.findOne({ _id: id });
+            user._doc.otpVefication = usersteps.otpVefication;
+            user._doc.passwordUpdate = usersteps.passwordUpdate;
+            user._doc.usernameUpdate = usersteps.usernameUpdate;
+            user._doc.bioUpdate = usersteps.bioUpdate;
+            user._doc.UserSuggestions = usersteps.UserSuggestions;
+            user._doc.groupSuggestion = usersteps.groupSuggestion;
+            user._doc.profilepictureUpdate = usersteps.profilepictureUpdate;
             result.status = 200;
+            result.user = user;
             result.message = "stage skipped."
         }
         catch (error) {

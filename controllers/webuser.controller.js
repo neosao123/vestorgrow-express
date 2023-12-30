@@ -28,7 +28,6 @@ module.exports = {
 
     resendemailverificationOTP: async (req, res) => {
         const result = await webUserService.resendEmailVerifiacationOTP(req.body.email);
-        console.log("RESULT:", result)
         let status = result.status;
         delete result.status;
         if (status === 200) {

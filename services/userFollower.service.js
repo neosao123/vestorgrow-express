@@ -343,7 +343,7 @@ module.exports = {
             }
           }
           result.followersCount = cnta;
-          await User.findByIdAndUpdate(data.userId, { $set: { following: cnta } });
+          await User.findByIdAndUpdate(data.userId, { $set: { followers: cnta } });
         }
 
         // await User.findByIdAndUpdate(data.followingId, { $set: { followers: followers } });
@@ -399,10 +399,10 @@ module.exports = {
           }
           console.log(cnt)
           result.followingCnt = cnt;
-          await User.findByIdAndUpdate(currUser, { $set: { following: cnt } });
+          await User.findByIdAndUpdate(currUser, { $set: { following: cnt } }, { new: true });
         }
 
-        const followers = await UserFollower.find({ followingId: data.followingId }).populate('userId');
+        const followers = await UserFollower.find({ followingId: currUser }).populate('userId');
 
         if (followers.length > 0) {
           let cnta = 0;
@@ -412,10 +412,8 @@ module.exports = {
             }
           }
           result.followersCount = cnta;
-          await User.findByIdAndUpdate(data.userId, { $set: { following: cnta } });
+          await User.findByIdAndUpdate(data.userId, { $set: { followers: cnta } });
         }
-
-        // await User.findByIdAndUpdate(data.followingId, { $set: { followers: followers } });
 
       } else {
         data = { userId: currUser, followingId: data.followingId, requested: true };
