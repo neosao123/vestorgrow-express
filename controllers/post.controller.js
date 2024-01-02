@@ -1,6 +1,7 @@
 const postServ = require("../services/post.service");
 const fs = require("fs");
 const utils = require("../utils/utils");
+const { query } = require("express");
 
 module.exports = {
   add: async function (req, res) {
@@ -90,7 +91,7 @@ module.exports = {
   },
 
   myFeed: async function (req, res) {
-    let result = await postServ.myFeed(req.body, req.currUser);
+    let result = await postServ.myFeed(req.body, req.currUser, req.body.page);
     utils.sendResponse(result, req, res);
   }
 };

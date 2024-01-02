@@ -471,9 +471,11 @@ module.exports = {
     return result;
   },
 
-  myFeed: async function (postObj, currUser) {
+  myFeed: async function (postObj, currUser, page) {
     let result = {};
     let count = 0;
+    const pageNumber = parseInt(page) || 1;
+    const skip = (pageNumber - 1) * 20;
     let sortBy = {
       createdAt: -1
     };
@@ -604,7 +606,7 @@ module.exports = {
           }
         })
         .limit(parseInt(postObj.length))
-        .skip(postObj.start)
+        .skip(skip)
         .sort({ createdAt: -1 });
 
       let postIdArray = data.map((i) => i._id);
