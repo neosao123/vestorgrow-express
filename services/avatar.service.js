@@ -12,4 +12,18 @@ module.exports = {
         }
         return result;
     },
+
+    getAvatar: async function () {
+        let result = {};
+        try {
+            result.status = 200;
+            result.data = await AvatarModel.find({});
+            result.message = "All Avatar"
+        }
+        catch (error) {
+            result.status = 400;
+            result.err = error.message;
+        }
+        return result;
+    }
 }

@@ -54,10 +54,9 @@ module.exports = {
 
     add: async function (user) {
         let result = {};
-        console.log("USER:", user);
-        const { first_name, last_name, email, date_of_birth } = user;
+        const { first_name, last_name, email, date_of_birth, password, confirm_password } = user;
         try {
-            if (!first_name || !last_name || !email || !date_of_birth) {
+            if (!first_name || !last_name || !email || !date_of_birth || !password || !confirm_password) {
                 throw Error("All fields required.")
             }
             let CheckEmail = await UserModel.find({ email }).select("+password");
@@ -110,7 +109,7 @@ module.exports = {
             const User = await UserTempModel.findOne({ email: email });
             if (+otp === User.emailOTP) {
                 // const user = await UserTempModel.findOneAndUpdate({ email: email }, { $set: { accountVerified: true } }, { new: true });
-                const user = await UserModel.create({ email: email, accountVerified: true, first_name: User.first_name, last_name: User.last_name, date_of_birth: User.date_of_birth });
+                const user = await UserModel.create({ email: email, accountVerified: true, first_name: User.first_name, last_name: User.last_name, date_of_birth: User.date_of_birth, password: User.password, confirm_password: User.confirm_password });
                 let usersteps = await userSteps.create({ userId: user._id, otpVefication: true });
                 user._doc.otpVefication = usersteps.otpVefication;
                 user._doc.passwordUpdate = usersteps.passwordUpdate;

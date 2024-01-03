@@ -1,6 +1,7 @@
 const AvatarServ = require("../services/avatar.service");
 const fs = require("fs");
 const utils = require("../utils/utils");
+const avatarService = require("../services/avatar.service");
 
 module.exports = {
     uploadAvatar: async function (req, res) {
@@ -30,5 +31,16 @@ module.exports = {
         let faq = req.body;
         let result = await AvatarServ.uploadAvatar(faq);
         utils.sendResponse(result, req, res);
+    },
+
+    getAvatar: async function (req, res) {
+        const result = await AvatarServ.getAvatar();
+        if (result.status !== 200) {
+            res.status(result.status).send(result);
+        }
+        else {
+            delete result.status;
+            res.send(result);
+        }
     }
 }
