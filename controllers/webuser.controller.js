@@ -105,7 +105,7 @@ module.exports = {
     },
 
     update_Password_auth: async (req, res) => {
-        const result = await webUserService.update_Password_auth(req.body.email, req.body.date_of_birth);
+        const result = await webUserService.update_Password_auth(req.body.email, req.body.date_of_birth, req.body.password);
         if (result.status !== 200) {
             res.status(result.status).send(result);
         }

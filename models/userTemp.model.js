@@ -154,8 +154,7 @@ const userSchema = mongoose.Schema(
         },
         password: {
             type: String,
-            default: null,
-            select: false
+            default: null
         },
         is_delete: {
             type: Boolean,

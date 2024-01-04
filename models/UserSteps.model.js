@@ -10,14 +10,6 @@ const UserStepsSchema = new mongoose.Schema(
             type: Boolean,
             default: false,
         },
-        passwordUpdate: {
-            type: Boolean,
-            default: false
-        },
-        ProfileUpdates: {
-            type: Boolean,
-            default: false
-        },
         usernameUpdate: {
             type: Boolean,
             default: false

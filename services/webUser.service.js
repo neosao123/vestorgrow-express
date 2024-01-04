@@ -5,6 +5,7 @@ const userSteps = require("../models/UserSteps.model");
 const UserTempModel = require("../models/userTemp.model");
 const { ObjectId } = require("mongodb");
 const bcrypt = require("bcrypt");
+const { has } = require("config");
 
 const OtpVerificationType = {
     MOBILE: 'mobile',
@@ -17,6 +18,7 @@ module.exports = {
         let otp = Math.floor(1000 + Math.random() * 9000);
         var id = "";
         var status = false;
+        let saltRounds = 10;
 
         if (type == OtpVerificationType.EMAIL) {
             user.emailOTP = otp;
@@ -36,6 +38,10 @@ module.exports = {
             if (existingUser) {
                 await UserTempModel.findOneAndDelete({ email: user.email });
             }
+            const { first_name, last_name, date_of_birth, email, password, confirm_password } = user;
+            let salt = bcrypt.genSaltSync(saltRounds); // creating salt
+            let hash = bcrypt.hashSync(password, salt);
+            user.password = hash;
             updateUser = await UserTempModel.create(user);
             if (updateUser) {
                 id = updateUser._id;
@@ -54,9 +60,9 @@ module.exports = {
 
     add: async function (user) {
         let result = {};
-        const { first_name, last_name, email, date_of_birth, password, confirm_password } = user;
+        const { first_name, last_name, email, date_of_birth, password } = user;
         try {
-            if (!first_name || !last_name || !email || !date_of_birth || !password || !confirm_password) {
+            if (!first_name || !last_name || !email || !date_of_birth || !password) {
                 throw Error("All fields required.")
             }
             let CheckEmail = await UserModel.find({ email }).select("+password");
@@ -109,10 +115,9 @@ module.exports = {
             const User = await UserTempModel.findOne({ email: email });
             if (+otp === User.emailOTP) {
                 // const user = await UserTempModel.findOneAndUpdate({ email: email }, { $set: { accountVerified: true } }, { new: true });
-                const user = await UserModel.create({ email: email, accountVerified: true, first_name: User.first_name, last_name: User.last_name, date_of_birth: User.date_of_birth, password: User.password, confirm_password: User.confirm_password });
+                const user = await UserModel.create({ email: email, accountVerified: true, first_name: User.first_name, last_name: User.last_name, date_of_birth: User.date_of_birth, password: User.password });
                 let usersteps = await userSteps.create({ userId: user._id, otpVefication: true });
                 user._doc.otpVefication = usersteps.otpVefication;
-                user._doc.passwordUpdate = usersteps.passwordUpdate;
                 user._doc.usernameUpdate = usersteps.usernameUpdate;
                 user._doc.bioUpdate = usersteps.bioUpdate;
                 user._doc.UserSuggestions = usersteps.UserSuggestions;
@@ -247,7 +252,6 @@ module.exports = {
     },
 
     change_email: async (id, email) => {
-        console.log("id:", id, "email:", email)
         let result = {};
         try {
             let otp = Math.floor(1000 + Math.random() * 9000);
@@ -333,17 +337,19 @@ module.exports = {
 
     signup_Google: async (obj) => {
         let result = {};
+        console.log("objecct:", obj)
         try {
             const emailExists = await UserModel.findOne({ email: obj.email });
             if (emailExists) {
-                result.message = "Email already exist.";
-                result.status = 200;
-                return result;
+                // result.message = "Email already exist.";
+                // result.status = 200;
+                // return result;
+                await UserModel.findOneAndDelete({ email: obj.email });
+                await userSteps.findOneAndDelete({ userId: emailExists._id });
             }
             let user = await UserModel.create({ ...obj, accountVerified: true });
             let usersteps = await userSteps.create({ userId: user._id, otpVefication: true, ProfileUpdates: true });
             user._doc.otpVefication = usersteps.otpVefication;
-            user._doc.passwordUpdate = usersteps.passwordUpdate;
             user._doc.usernameUpdate = usersteps.usernameUpdate;
             user._doc.bioUpdate = usersteps.bioUpdate;
             user._doc.UserSuggestions = usersteps.UserSuggestions;
@@ -360,13 +366,16 @@ module.exports = {
         return result;
     },
 
-    update_Password_auth: async (email, date_of_birth) => {
+    update_Password_auth: async (email, date_of_birth, password) => {
         let result = {};
+        let saltRounds = 10;
+
         try {
-            let user = await UserModel.findOneAndUpdate({ email: email }, { $set: { date_of_birth: date_of_birth } }, { new: true });
+            let salt = bcrypt.genSaltSync(saltRounds); // creating salt
+            let hash = bcrypt.hashSync(password, salt);
+            let user = await UserModel.findOneAndUpdate({ email: email }, { $set: { date_of_birth: date_of_birth, password: hash } }, { new: true });
             let usersteps = await userSteps.findOneAndUpdate({ userId: user._id }, { profilepictureUpdate: true });
             user._doc.otpVefication = usersteps.otpVefication;
-            user._doc.passwordUpdate = usersteps.passwordUpdate;
             user._doc.usernameUpdate = usersteps.usernameUpdate;
             user._doc.bioUpdate = usersteps.bioUpdate;
             user._doc.UserSuggestions = usersteps.UserSuggestions;
